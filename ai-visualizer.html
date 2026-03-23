@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🤖 GobbleGame AI Visualizer</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --ai: #3b82f6;
+    --human: #ef4444;
+    --positive: #22c55e;
+    --negative: #ef4444;
+    --gold: #f59e0b;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --border: #334155;
+    --highlight: #fbbf24;
+    --prune: #475569;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    line-height: 1.6;
+    padding: 0 0 60px 0;
+  }
+
+  /* ── Header ── */
+  header {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-bottom: 2px solid var(--border);
+    padding: 24px 20px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header h1 { font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 700; }
+  header p { color: var(--muted); font-size: 0.95rem; margin-top: 4px; }
+  header a {
+    position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
+    color: var(--ai); text-decoration: none; font-size: 0.9rem;
+    background: rgba(59,130,246,0.1); padding: 6px 12px; border-radius: 6px;
+    border: 1px solid rgba(59,130,246,0.3); transition: background .2s;
+    white-space: nowrap;
+  }
+  header a:hover { background: rgba(59,130,246,0.2); }
+
+  /* ── Layout ── */
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 16px; }
+  .section-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 24px;
+    margin-bottom: 40px;
+  }
+  .section-title {
+    font-size: 1.3rem; font-weight: 700; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 24px; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 18px; border-radius: 8px; border: none;
+    font-size: 0.9rem; font-weight: 600; cursor: pointer;
+    transition: opacity .15s, transform .1s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+  .btn-primary { background: var(--ai); color: #fff; }
+  .btn-secondary { background: var(--border); color: var(--text); }
+  .btn-gold { background: var(--gold); color: #0f172a; }
+  .btn-danger { background: var(--human); color: #fff; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+
+  /* ── Tree ── */
+  .tree-wrap { overflow-x: auto; padding-bottom: 8px; }
+  .tree {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 0; min-width: 480px;
+  }
+  .tree-level { display: flex; justify-content: center; gap: 0; }
+  .tree-node-col { display: flex; flex-direction: column; align-items: center; }
+  .tree-edge-row { display: flex; justify-content: center; gap: 0; }
+
+  .node {
+    width: 62px; height: 62px; border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.8rem; border: 3px solid transparent;
+    position: relative; transition: box-shadow .3s, border-color .3s, background .3s;
+    cursor: default; user-select: none;
+  }
+  .node.ai-node { background: rgba(59,130,246,0.15); border-color: var(--ai); }
+  .node.human-node { background: rgba(239,68,68,0.15); border-color: var(--human); }
+  .node.leaf-node { background: #1a2744; border-color: var(--border); font-size: 1rem; font-weight: 800; }
+  .node.active { box-shadow: 0 0 0 4px var(--highlight), 0 0 20px var(--highlight); border-color: var(--highlight) !important; background: rgba(251,191,36,0.2) !important; }
+  .node.done { opacity: 0.7; }
+  .node.pruned { background: rgba(71,85,105,0.3) !important; border-color: var(--prune) !important; color: var(--prune) !important; }
+  .node .score-badge {
+    position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%);
+    font-size: 0.75rem; font-weight: 700; white-space: nowrap;
+    padding: 1px 6px; border-radius: 4px;
+  }
+  .score-pos { background: rgba(34,197,94,0.2); color: var(--positive); }
+  .score-neg { background: rgba(239,68,68,0.2); color: var(--negative); }
+  .score-zero { background: rgba(148,163,184,0.2); color: var(--muted); }
+
+  .edge-container { position: relative; display: flex; align-items: flex-start; justify-content: center; }
+  .edge {
+    width: 2px; background: var(--border);
+    transition: background .3s;
+    margin: 0 auto;
+  }
+  .edge.active { background: var(--highlight); }
+  .edge.pruned { background: var(--prune); opacity: .4; }
+  .prune-icon {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 1.1rem; display: none; background: var(--card); padding: 1px 2px; border-radius: 3px;
+  }
+  .prune-icon.visible { display: block; }
+
+  .h-connector { height: 2px; background: var(--border); transition: background .3s; }
+  .h-connector.pruned { background: var(--prune); opacity: .4; }
+
+  /* ── Explanation panel ── */
+  .explain-panel {
+    background: #0f172a; border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 20px;
+    min-height: 70px; margin-top: 20px;
+    font-size: 0.9rem; line-height: 1.6;
+  }
+  .explain-panel .step-num { color: var(--gold); font-weight: 700; }
+  .explain-panel .em-ai { color: var(--ai); font-weight: 600; }
+  .explain-panel .em-human { color: var(--human); font-weight: 600; }
+  .explain-panel .em-val { color: var(--positive); font-weight: 700; }
+  .explain-panel .em-prune { color: var(--gold); font-weight: 700; }
+
+  /* ── Alpha-Beta panel ── */
+  .ab-layout { display: flex; gap: 20px; flex-wrap: wrap; }
+  .ab-tree-side { flex: 1; min-width: 300px; }
+  .ab-values-panel {
+    width: 200px; flex-shrink: 0;
+    background: #0f172a; border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px; align-self: flex-start;
+  }
+  .ab-values-panel h4 { font-size: 0.85rem; color: var(--muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: .05em; }
+  .ab-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; }
+  .ab-row .label { color: var(--muted); }
+  .ab-alpha { color: var(--ai); font-weight: 700; }
+  .ab-beta  { color: var(--human); font-weight: 700; }
+
+  /* ── Section 3: Live Board ── */
+  .s3-layout { display: flex; gap: 24px; flex-wrap: wrap; }
+  .board-area { flex-shrink: 0; }
+  .score-area { flex: 1; min-width: 260px; }
+
+  .piece-controls {
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px;
+  }
+  .piece-controls label { color: var(--muted); font-size: 0.85rem; }
+  .toggle-group { display: flex; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+  .toggle-btn {
+    padding: 6px 14px; background: transparent; color: var(--text);
+    border: none; cursor: pointer; font-size: 0.85rem; font-weight: 600;
+    transition: background .15s;
+  }
+  .toggle-btn.active-ai { background: var(--ai); }
+  .toggle-btn.active-human { background: var(--human); }
+
+  .gobble-board {
+    display: grid; grid-template-columns: repeat(3, 90px);
+    grid-template-rows: repeat(3, 90px);
+    gap: 6px; margin-bottom: 16px;
+  }
+  .cell {
+    background: #162032; border: 2px solid var(--border);
+    border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: border-color .2s, background .2s;
+    position: relative; overflow: hidden;
+  }
+  .cell:hover { border-color: var(--ai); background: #1a2a40; }
+  .cell .piece {
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 700; color: #fff; transition: all .2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,.4);
+  }
+  .piece.ai-piece { background: var(--ai); }
+  .piece.human-piece { background: var(--human); }
+  .piece.size-1 { width: 28px; height: 28px; font-size: 0.6rem; }
+  .piece.size-2 { width: 42px; height: 42px; font-size: 0.65rem; }
+  .piece.size-3 { width: 58px; height: 58px; font-size: 0.7rem; }
+  .cell.highlighted { border-color: var(--gold) !important; background: rgba(245,158,11,0.12) !important; }
+
+  /* ── Score breakdown ── */
+  .score-total {
+    text-align: center; font-size: 2rem; font-weight: 800;
+    padding: 12px; border-radius: 10px; margin-bottom: 16px;
+    border: 2px solid transparent;
+  }
+  .score-total.winning { color: var(--positive); border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.08); }
+  .score-total.losing  { color: var(--negative); border-color: rgba(239,68,68,0.3);  background: rgba(239,68,68,0.08); }
+  .score-total.neutral { color: var(--muted);    border-color: var(--border);         background: rgba(148,163,184,0.08); }
+
+  .breakdown-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .breakdown-table th {
+    text-align: left; padding: 6px 8px; color: var(--muted);
+    border-bottom: 1px solid var(--border); font-weight: 600;
+  }
+  .breakdown-table td { padding: 5px 8px; border-bottom: 1px solid rgba(51,65,85,0.5); }
+  .breakdown-table tr:hover td { background: rgba(255,255,255,0.03); }
+  .score-cell.pos { color: var(--positive); font-weight: 700; }
+  .score-cell.neg { color: var(--negative); font-weight: 700; }
+  .score-cell.zero { color: var(--muted); }
+  .extra-row td { color: var(--muted); font-style: italic; }
+
+  /* ── Section 4: AI Think ── */
+  .s4-layout { display: flex; gap: 24px; flex-wrap: wrap; }
+  .s4-board-area { flex-shrink: 0; }
+  .s4-results { flex: 1; min-width: 260px; }
+
+  .move-log {
+    max-height: 260px; overflow-y: auto;
+    background: #0f172a; border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px;
+    margin-bottom: 16px;
+  }
+  .move-log-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 10px; border-radius: 6px; margin-bottom: 4px;
+    font-size: 0.82rem; gap: 8px;
+  }
+  .move-log-item.best { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); }
+  .move-log-item .move-label { color: var(--text); flex: 1; }
+  .move-log-item .move-score { font-weight: 700; }
+
+  .bar-chart { margin-top: 4px; }
+  .bar-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 0.8rem; }
+  .bar-label { width: 170px; flex-shrink: 0; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-track { flex: 1; background: rgba(51,65,85,0.5); border-radius: 4px; height: 16px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width .4s ease; display: flex; align-items: center; padding-left: 6px; }
+  .bar-fill.best-bar { background: var(--gold); }
+  .bar-fill.pos-bar  { background: rgba(59,130,246,0.6); }
+  .bar-fill.neg-bar  { background: rgba(239,68,68,0.5); }
+  .bar-score { font-weight: 700; font-size: 0.8rem; min-width: 36px; text-align: right; }
+
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .badge-thinking { background: rgba(245,158,11,0.15); color: var(--gold); border: 1px solid rgba(245,158,11,0.3); }
+  .badge-done     { background: rgba(34,197,94,0.15);  color: var(--positive); border: 1px solid rgba(34,197,94,0.3); }
+  .badge-idle     { background: rgba(148,163,184,0.1); color: var(--muted); border: 1px solid var(--border); }
+
+  /* ── Legend / misc ── */
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; font-size: 0.82rem; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+  .legend-dot.ai   { background: var(--ai); }
+  .legend-dot.human{ background: var(--human); }
+  .legend-dot.leaf { background: var(--border); }
+  .legend-dot.gold { background: var(--gold); }
+
+  .node-label { font-size: 0.65rem; color: var(--muted); margin-top: 1px; }
+
+  /* Progress indicator */
+  .progress-dots { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .progress-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--border); transition: background .3s;
+  }
+  .progress-dot.done    { background: var(--muted); }
+  .progress-dot.active  { background: var(--highlight); box-shadow: 0 0 6px var(--highlight); }
+
+  @media (max-width: 600px) {
+    header a { position: static; transform: none; display: block; margin-bottom: 10px; text-align: center; }
+    .ab-values-panel { width: 100%; }
+    .gobble-board { grid-template-columns: repeat(3, 76px); grid-template-rows: repeat(3, 76px); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="index.html">← Back to Game</a>
+  <h1>🤖 GobbleGame AI Visualizer</h1>
+  <p>See how the Minimax + Alpha-Beta Pruning AI thinks</p>
+</header>
+
+<div class="container">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 1: Minimax Tree
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="section-card" id="sec1">
+    <div class="section-title">🌳 Section 1 — Minimax Tree Explainer</div>
+    <div class="section-subtitle">Step through the algorithm to see how the AI evaluates future moves and picks the best one.</div>
+
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot ai"></div>🤖 AI (maximizer)</div>
+      <div class="legend-item"><div class="legend-dot human"></div>👤 Human (minimizer)</div>
+      <div class="legend-item"><div class="legend-dot gold"></div>Currently visiting</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="mm-next">▶ Next Step</button>
+      <button class="btn btn-secondary" id="mm-reset">↺ Reset</button>
+    </div>
+
+    <div class="progress-dots" id="mm-dots"></div>
+
+    <div class="tree-wrap">
+      <div id="mm-tree"></div>
+    </div>
+
+    <div class="explain-panel" id="mm-explain">
+      Press <strong>▶ Next Step</strong> to start the walkthrough.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 2: Alpha-Beta Pruning
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="section-card" id="sec2">
+    <div class="section-title">✂️ Section 2 — Alpha-Beta Pruning Explainer</div>
+    <div class="section-subtitle">Watch how Alpha-Beta Pruning skips branches the AI already knows are irrelevant — saving time without changing the result.</div>
+
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot ai"></div>🤖 AI (α — maximizer)</div>
+      <div class="legend-item"><div class="legend-dot human"></div>👤 Human (β — minimizer)</div>
+      <div class="legend-item" style="background:rgba(71,85,105,0.3);padding:2px 8px;border-radius:4px;color:var(--muted)">⬛ Pruned branch</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="ab-next">▶ Next Step</button>
+      <button class="btn btn-secondary" id="ab-reset">↺ Reset</button>
+    </div>
+
+    <div class="progress-dots" id="ab-dots"></div>
+
+    <div class="ab-layout">
+      <div class="ab-tree-side">
+        <div class="tree-wrap">
+          <div id="ab-tree"></div>
+        </div>
+      </div>
+      <div class="ab-values-panel" id="ab-panel">
+        <h4>Current α / β</h4>
+        <div class="ab-row"><span class="label">Node</span><span id="ab-node-lbl">—</span></div>
+        <div class="ab-row"><span class="label">α (AI best)</span><span class="ab-alpha" id="ab-alpha-val">−∞</span></div>
+        <div class="ab-row"><span class="label">β (Human best)</span><span class="ab-beta"  id="ab-beta-val">+∞</span></div>
+        <hr class="divider">
+        <div style="font-size:0.78rem;color:var(--muted)">If β ≤ α → prune remaining siblings</div>
+      </div>
+    </div>
+
+    <div class="explain-panel" id="ab-explain">
+      Press <strong>▶ Next Step</strong> to start the walkthrough.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 3: Live Score Breakdown Board
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="section-card" id="sec3">
+    <div class="section-title">📊 Section 3 — Live Score Breakdown Board</div>
+    <div class="section-subtitle">Place pieces on the board to see exactly how <code>evaluate()</code> scores each position in real time.</div>
+
+    <div class="piece-controls">
+      <label>Player:</label>
+      <div class="toggle-group">
+        <button class="toggle-btn active-ai" id="s3-pick-ai"   onclick="s3PickPlayer('ai')">🤖 AI</button>
+        <button class="toggle-btn"           id="s3-pick-human" onclick="s3PickPlayer('human')">👤 Human</button>
+      </div>
+      <label>Size:</label>
+      <div class="toggle-group">
+        <button class="toggle-btn active-ai" id="s3-size-1" onclick="s3PickSize(1)">S</button>
+        <button class="toggle-btn"           id="s3-size-2" onclick="s3PickSize(2)">M</button>
+        <button class="toggle-btn"           id="s3-size-3" onclick="s3PickSize(3)">L</button>
+      </div>
+      <button class="btn btn-secondary" onclick="s3Clear()">🗑 Clear Board</button>
+    </div>
+
+    <div class="s3-layout">
+      <div class="board-area">
+        <div class="gobble-board" id="s3-board"></div>
+        <div style="font-size:0.78rem;color:var(--muted);margin-top:4px">Click a cell to place a piece (larger pieces gobble smaller ones)</div>
+      </div>
+      <div class="score-area">
+        <div class="score-total neutral" id="s3-total">Score: 0</div>
+        <table class="breakdown-table">
+          <thead>
+            <tr>
+              <th>Win Line</th>
+              <th>AI</th>
+              <th>Human</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody id="s3-breakdown"></tbody>
+        </table>
+        <div id="s3-extras" style="margin-top:10px;font-size:0.82rem;color:var(--muted)"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 4: Watch the AI Think
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="section-card" id="sec4">
+    <div class="section-title">🧠 Section 4 — "Watch the AI Think" Live Move Tracer</div>
+    <div class="section-subtitle">A preset board state. Click <strong>🤖 Run AI</strong> to watch the AI evaluate every possible move and pick the best one.</div>
+
+    <div class="btn-row">
+      <button class="btn btn-gold" id="s4-run">🤖 Run AI</button>
+      <button class="btn btn-secondary" id="s4-reset">↺ Reset Board</button>
+    </div>
+
+    <div class="s4-layout">
+      <div class="s4-board-area">
+        <div class="gobble-board" id="s4-board"></div>
+        <div style="font-size:0.78rem;color:var(--muted);margin-top:4px">🟡 Gold border = AI's chosen move</div>
+      </div>
+      <div class="s4-results">
+        <div class="status-badge badge-idle" id="s4-status">⏳ Waiting — click Run AI</div>
+        <div id="s4-best-label" style="font-size:0.9rem;margin-bottom:12px;color:var(--muted)"></div>
+
+        <div id="s4-log-wrap" style="display:none">
+          <div style="font-size:0.85rem;font-weight:600;margin-bottom:6px;color:var(--text)">All Moves (best → worst):</div>
+          <div class="move-log" id="s4-log"></div>
+
+          <div style="font-size:0.85rem;font-weight:600;margin-bottom:8px;color:var(--text)">Score Bar Chart:</div>
+          <div class="bar-chart" id="s4-bars"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+'use strict';
+
+/* ════════════════════════════════════════════════════════════════
+   INLINED AI LOGIC
+════════════════════════════════════════════════════════════════ */
+const WIN_LINES = [
+  [0,1,2],[3,4,5],[6,7,8],
+  [0,3,6],[1,4,7],[2,5,8],
+  [0,4,8],[2,4,6]
+];
+
+function cloneState(state) {
+  return {
+    board: state.board.map(stack => stack.map(p => ({...p}))),
+    humanReserve: state.humanReserve.map(p => ({...p})),
+    aiReserve:    state.aiReserve.map(p => ({...p})),
+  };
+}
+
+function top(stack) { return stack.length ? stack[stack.length - 1] : null; }
+
+function generateMoves(state, player) {
+  const moves = [];
+  const reserve = player === 'ai' ? state.aiReserve : state.humanReserve;
+  const reserveAvail = {};
+  reserve.forEach(p => { if (!p.used) reserveAvail[p.size] = reserveAvail[p.size] || p; });
+  Object.values(reserveAvail).forEach(piece => {
+    for (let to = 0; to < 9; to++) {
+      const t = top(state.board[to]);
+      if (!t || t.size < piece.size)
+        moves.push({ type: 'place', player, size: piece.size, pieceId: piece.id, toCell: to });
+    }
+  });
+  for (let from = 0; from < 9; from++) {
+    const t = top(state.board[from]);
+    if (!t || t.player !== player) continue;
+    for (let to = 0; to < 9; to++) {
+      if (from === to) continue;
+      const dest = top(state.board[to]);
+      if (!dest || dest.size < t.size)
+        moves.push({ type: 'move', player, size: t.size, pieceId: t.id, fromCell: from, toCell: to });
+    }
+  }
+  return moves;
+}
+
+function applyMove(state, move) {
+  if (move.type === 'place') {
+    const reserve = move.player === 'ai' ? state.aiReserve : state.humanReserve;
+    const idx = reserve.findIndex(p => p.id === move.pieceId);
+    reserve[idx].used = true;
+    state.board[move.toCell].push({ id: move.pieceId, player: move.player, size: move.size });
+  } else {
+    const piece = state.board[move.fromCell].pop();
+    state.board[move.toCell].push(piece);
+  }
+}
+
+function checkWinner(state) {
+  for (const line of WIN_LINES) {
+    const tops = line.map(i => top(state.board[i]));
+    if (tops[0] && tops[1] && tops[2] &&
+        tops[0].player === tops[1].player &&
+        tops[1].player === tops[2].player) return tops[0].player;
+  }
+  return null;
+}
+
+function evaluate(state) {
+  const WIN_SCORE = 100000;
+  const winner = checkWinner(state);
+  if (winner === 'ai')    return { score: WIN_SCORE,  breakdown: [], centerBonus: 0, reserveBonus: 0 };
+  if (winner === 'human') return { score: -WIN_SCORE, breakdown: [], centerBonus: 0, reserveBonus: 0 };
+  let score = 0;
+  const breakdown = [];
+  for (const line of WIN_LINES) {
+    let aiCount = 0, humanCount = 0, aiSize = 0, humanSize = 0;
+    for (const i of line) {
+      const t = top(state.board[i]);
+      if (!t) continue;
+      if (t.player === 'ai')    { aiCount++;    aiSize    = Math.max(aiSize, t.size); }
+      else                      { humanCount++; humanSize = Math.max(humanSize, t.size); }
+    }
+    let lineScore = 0;
+    if (aiCount > 0 && humanCount > 0) {
+      lineScore = aiSize > humanSize ? 2 : humanSize > aiSize ? -2 : 0;
+    } else {
+      if (aiCount === 2)    lineScore = 10;
+      else if (aiCount === 1) lineScore = 2;
+      if (humanCount === 2) lineScore = -10;
+      else if (humanCount === 1) lineScore = -2;
+    }
+    score += lineScore;
+    breakdown.push({ line, aiCount, humanCount, lineScore });
+  }
+  const c = top(state.board[4]);
+  const centerBonus  = c ? (c.player === 'ai' ? 3 : -3) : 0;
+  score += centerBonus;
+  const aiLarge    = state.aiReserve.filter(p => !p.used && p.size === 3).length;
+  const humanLarge = state.humanReserve.filter(p => !p.used && p.size === 3).length;
+  const reserveBonus = aiLarge - humanLarge;
+  score += reserveBonus;
+  return { score, breakdown, centerBonus, reserveBonus };
+}
+
+function minimaxScore(state, depth, alpha, beta, maximising) {
+  const INF = 1e9, WIN_SCORE = 100000;
+  const winner = checkWinner(state);
+  if (winner === 'ai')    return WIN_SCORE + depth;
+  if (winner === 'human') return -(WIN_SCORE + depth);
+  if (depth === 0) { const r = evaluate(state); return typeof r === 'object' ? r.score : r; }
+  const player = maximising ? 'ai' : 'human';
+  const moves  = generateMoves(state, player);
+  if (!moves.length) return maximising ? -1 : 1;
+  if (maximising) {
+    let best = -INF;
+    for (const move of moves) {
+      const saved = cloneState(state);
+      applyMove(state, move);
+      const val = minimaxScore(state, depth - 1, alpha, beta, false);
+      state.board = saved.board; state.humanReserve = saved.humanReserve; state.aiReserve = saved.aiReserve;
+      best = Math.max(best, val); alpha = Math.max(alpha, val);
+      if (beta <= alpha) break;
+    }
+    return best;
+  } else {
+    let best = INF;
+    for (const move of moves) {
+      const saved = cloneState(state);
+      applyMove(state, move);
+      const val = minimaxScore(state, depth - 1, alpha, beta, true);
+      state.board = saved.board; state.humanReserve = saved.humanReserve; state.aiReserve = saved.aiReserve;
+      best = Math.min(best, val); beta = Math.min(beta, val);
+      if (beta <= alpha) break;
+    }
+    return best;
+  }
+}
+
+function getBestMoveWithScores(state) {
+  const INF = 1e9;
+  const moves = generateMoves(state, 'ai');
+  if (!moves.length) return { bestMove: null, moveScores: [] };
+  let bestVal = -INF, bestMove = moves[0];
+  const moveScores = [];
+  for (const move of moves) {
+    const saved = cloneState(state);
+    applyMove(state, move);
+    const val = minimaxScore(state, 2, -INF, INF, false);
+    state.board = saved.board; state.humanReserve = saved.humanReserve; state.aiReserve = saved.aiReserve;
+    const label = move.type === 'place'
+      ? `Place size-${move.size} → cell ${move.toCell}`
+      : `Move size-${move.size}: cell ${move.fromCell} → cell ${move.toCell}`;
+    moveScores.push({ move, score: val, label });
+    if (val > bestVal) { bestVal = val; bestMove = move; }
+  }
+  moveScores.sort((a, b) => b.score - a.score);
+  return { bestMove, bestVal, moveScores };
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SECTION 1 — Minimax Tree (static 3-level demo tree)
+════════════════════════════════════════════════════════════════
+
+  Tree structure (depth 2, 3 children of root, 2 children each):
+  Root (AI max): R
+    Child A (Human min):
+      Leaf +10, Leaf -5
+    Child B (Human min):
+      Leaf +3,  Leaf +8
+    Child C (Human min):
+      Leaf -2,  Leaf +7
+
+  Minimax result:
+    Child A min(10,-5)=-5
+    Child B min(3,8)=3
+    Child C min(-2,7)=-2
+    Root   max(-5,3,-2)=3  → pick B
+*/
+
+const MM_LEAVES = [10, -5, 3, 8, -2, 7];
+const MM_HUMAN_VALS = [
+  Math.min(10, -5),   // A = -5
+  Math.min(3, 8),     //  B = 3
+  Math.min(-2, 7),    // C = -2
+];
+const MM_ROOT_VAL = Math.max(...MM_HUMAN_VALS); // 3 → B
+
+// Steps: each step = { nodeId, edgeId, explainHtml, scoreUpdate: { nodeId, val } }
+// nodeIds:  root=R, humanA=A, humanB=B, humanC=C, leaf0..5
+// edgeIds:  e-R-A, e-R-B, e-R-C, e-A-0, e-A-1, e-B-2, e-B-3, e-C-4, e-C-5
+
+const MM_STEPS = [
+  { active: 'R', edges: [], explain: `<span class="step-num">Step 1:</span> The <span class="em-ai">🤖 AI</span> is at the root. It wants to <strong>maximise</strong> its score. It will examine all three moves: A, B, and C.` },
+  { active: 'A', edges: ['e-R-A'], explain: `<span class="step-num">Step 2:</span> AI explores <strong>Move A</strong> (Human's turn). The <span class="em-human">👤 Human</span> will <strong>minimise</strong>, so they'll pick the worst outcome for the AI.` },
+  { active: 'L0', edges: ['e-R-A','e-A-0'], explain: `<span class="step-num">Step 3:</span> Evaluate leaf <strong>A₁ = +10</strong>. A score of +10 means the AI is in a strong position at this future state.` },
+  { active: 'L1', edges: ['e-R-A','e-A-1'], explain: `<span class="step-num">Step 4:</span> Evaluate leaf <strong>A₂ = −5</strong>. The AI is losing in this branch.` },
+  { active: 'A', edges: ['e-R-A'], score: { id: 'A', val: -5 }, explain: `<span class="step-num">Step 5:</span> <span class="em-human">Human picks MIN(+10, −5) = <span style="color:var(--negative)">−5</span></span>. The human would choose the path that hurts the AI most.` },
+  { active: 'B', edges: ['e-R-B'], explain: `<span class="step-num">Step 6:</span> AI now explores <strong>Move B</strong>. Human to respond again.` },
+  { active: 'L2', edges: ['e-R-B','e-B-2'], explain: `<span class="step-num">Step 7:</span> Evaluate leaf <strong>B₁ = +3</strong>.` },
+  { active: 'L3', edges: ['e-R-B','e-B-3'], explain: `<span class="step-num">Step 8:</span> Evaluate leaf <strong>B₂ = +8</strong>.` },
+  { active: 'B', edges: ['e-R-B'], score: { id: 'B', val: 3 }, explain: `<span class="step-num">Step 9:</span> <span class="em-human">Human picks MIN(+3, +8) = <span style="color:var(--positive)">+3</span></span>. Human still minimises — +3 is worse for AI than +8.` },
+  { active: 'C', edges: ['e-R-C'], explain: `<span class="step-num">Step 10:</span> AI explores <strong>Move C</strong>.` },
+  { active: 'L4', edges: ['e-R-C','e-C-4'], explain: `<span class="step-num">Step 11:</span> Evaluate leaf <strong>C₁ = −2</strong>.` },
+  { active: 'L5', edges: ['e-R-C','e-C-5'], explain: `<span class="step-num">Step 12:</span> Evaluate leaf <strong>C₂ = +7</strong>.` },
+  { active: 'C', edges: ['e-R-C'], score: { id: 'C', val: -2 }, explain: `<span class="step-num">Step 13:</span> <span class="em-human">Human picks MIN(−2, +7) = <span style="color:var(--negative)">−2</span></span>.` },
+  { active: 'R', edges: [], score: { id: 'R', val: 3 }, final: 'B', explain: `<span class="step-num">Step 14:</span> <span class="em-ai">AI picks MAX(−5, +3, −2) = <span style="color:var(--positive)">+3</span> → chooses <strong>Move B</strong>!</span> This is the best outcome the AI can guarantee, assuming the human plays optimally.` },
+];
+
+let mmStep = -1;
+const mmScores = { R: null, A: null, B: null, C: null };
+
+function mmBuildTree() {
+  const container = document.getElementById('mm-tree');
+  container.innerHTML = '';
+  const tree = document.createElement('div');
+  tree.className = 'tree';
+
+  // Root row
+  const rootRow = document.createElement('div');
+  rootRow.className = 'tree-level';
+  const rootCol = document.createElement('div');
+  rootCol.className = 'tree-node-col';
+  rootCol.appendChild(makeNode('R', 'ai-node', '🤖', 'Root'));
+  rootRow.appendChild(rootCol);
+  tree.appendChild(rootRow);
+
+  // Root→Human edges (3 branches)
+  tree.appendChild(makeBranchEdges(['e-R-A','e-R-B','e-R-C'], 3, 120));
+
+  // Human nodes
+  const humanRow = document.createElement('div');
+  humanRow.className = 'tree-level';
+  ['A','B','C'].forEach((id, i) => {
+    const col = document.createElement('div');
+    col.className = 'tree-node-col';
+    col.appendChild(makeNode(id, 'human-node', '👤', ['Move A','Move B','Move C'][i]));
+    humanRow.appendChild(col);
+  });
+  tree.appendChild(humanRow);
+
+  // Human→Leaf edges (2 per human node, 6 total)
+  tree.appendChild(makeBranchEdges(['e-A-0','e-A-1','e-B-2','e-B-3','e-C-4','e-C-5'], 6, 62));
+
+  // Leaf row
+  const leafRow = document.createElement('div');
+  leafRow.className = 'tree-level';
+  MM_LEAVES.forEach((val, i) => {
+    const col = document.createElement('div');
+    col.className = 'tree-node-col';
+    const lbl = val > 0 ? `+${val}` : `${val}`;
+    col.appendChild(makeNode(`L${i}`, `leaf-node ${val > 0 ? 'score-pos' : val < 0 ? 'score-neg' : 'score-zero'}`, lbl, ''));
+    leafRow.appendChild(col);
+  });
+  tree.appendChild(leafRow);
+
+  container.appendChild(tree);
+  buildDots('mm-dots', MM_STEPS.length);
+}
+
+function makeNode(id, cls, icon, sublabel) {
+  const div = document.createElement('div');
+  div.className = `node ${cls}`;
+  div.id = `mm-node-${id}`;
+  div.innerHTML = `<span>${icon}</span><span class="node-label">${sublabel}</span>`;
+  return div;
+}
+
+function makeBranchEdges(ids, count, nodeWidth) {
+  // Returns a flex row of vertical edge stubs
+  const row = document.createElement('div');
+  row.style.cssText = `display:flex;justify-content:center;gap:0;`;
+  for (let i = 0; i < count; i++) {
+    const col = document.createElement('div');
+    col.style.cssText = `display:flex;flex-direction:column;align-items:center;width:${nodeWidth}px;`;
+    const e = document.createElement('div');
+    e.className = 'edge';
+    e.id = `mm-edge-${ids[i]}`;
+    e.style.height = '32px';
+    col.appendChild(e);
+    row.appendChild(col);
+  }
+  return row;
+}
+
+function buildDots(containerId, count) {
+  const c = document.getElementById(containerId);
+  c.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const d = document.createElement('div');
+    d.className = 'progress-dot';
+    d.id = `${containerId}-dot-${i}`;
+    c.appendChild(d);
+  }
+}
+
+function mmApplyStep(idx) {
+  // Clear all actives
+  document.querySelectorAll('#mm-tree .node').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('#mm-tree .edge').forEach(e => e.classList.remove('active'));
+
+  const step = MM_STEPS[idx];
+
+  // Activate current node
+  const activeNode = document.getElementById(`mm-node-${step.active}`);
+  if (activeNode) activeNode.classList.add('active');
+
+  // Activate edges
+  step.edges.forEach(eId => {
+    const edgeEl = document.getElementById(`mm-edge-${eId}`);
+    if (edgeEl) edgeEl.classList.add('active');
+  });
+
+  // Score badge
+  if (step.score) {
+    const nodeEl = document.getElementById(`mm-node-${step.score.id}`);
+    if (nodeEl) {
+      // Remove old badge
+      nodeEl.querySelectorAll('.score-badge').forEach(b => b.remove());
+      const badge = document.createElement('div');
+      const v = step.score.val;
+      badge.className = `score-badge ${v > 0 ? 'score-pos' : v < 0 ? 'score-neg' : 'score-zero'}`;
+      badge.textContent = v > 0 ? `+${v}` : `${v}`;
+      nodeEl.appendChild(badge);
+    }
+  }
+
+  // Highlight final best
+  if (step.final) {
+    const best = document.getElementById(`mm-node-${step.final}`);
+    if (best) { best.style.boxShadow = '0 0 0 4px var(--gold), 0 0 20px var(--gold)'; }
+  }
+
+  document.getElementById('mm-explain').innerHTML = step.explain;
+  updateDots('mm-dots', idx, MM_STEPS.length);
+}
+
+function updateDots(containerId, activeIdx, total) {
+  for (let i = 0; i < total; i++) {
+    const d = document.getElementById(`${containerId}-dot-${i}`);
+    if (!d) continue;
+    d.className = 'progress-dot' + (i < activeIdx ? ' done' : i === activeIdx ? ' active' : '');
+  }
+}
+
+document.getElementById('mm-next').addEventListener('click', () => {
+  mmStep++;
+  if (mmStep >= MM_STEPS.length) { mmStep = MM_STEPS.length - 1; return; }
+  mmApplyStep(mmStep);
+  document.getElementById('mm-next').disabled = (mmStep >= MM_STEPS.length - 1);
+});
+
+document.getElementById('mm-reset').addEventListener('click', () => {
+  mmStep = -1;
+  mmBuildTree();
+  document.getElementById('mm-explain').innerHTML = `Press <strong>▶ Next Step</strong> to start the walkthrough.`;
+  document.getElementById('mm-next').disabled = false;
+  buildDots('mm-dots', MM_STEPS.length);
+});
+
+mmBuildTree();
+
+
+/* ════════════════════════════════════════════════════════════════
+   SECTION 2 — Alpha-Beta Pruning
+════════════════════════════════════════════════════════════════
+
+  Same tree. Alpha-Beta prunes L1 (A₂=-5) check after we see A₁=10
+  and... let's use a richer tree to actually show pruning:
+
+  Root (AI max):
+    Child A (Human min):  → alpha=-∞, beta=+∞
+      Leaf +10  → beta becomes 10
+      Leaf -5   → beta becomes -5 → no prune yet at this level
+      (A result: -5, alpha becomes -5)
+    Child B (Human min): alpha=-5, beta=+∞
+      Leaf +3   → beta becomes 3 → 3 > -5, no prune
+      Leaf +8   → beta stays 3 (min) → no prune
+      (B result: +3, alpha becomes 3)
+    Child C (Human min): alpha=3, beta=+∞
+      Leaf -2   → beta becomes -2 → beta(-2) ≤ alpha(3) → PRUNE C₂!
+      C₂ is pruned!
+      (C result: -2, but AI wouldn't pick -2 < 3 anyway)
+
+  So we show a prune of C₂.
+*/
+
+// Leaf values same as section 1: 10,-5, 3,8, -2,7
+// After A: alpha=-5 (root ai guaranteed >= -5 after seeing A=-5)
+// Wait – let me recalculate properly:
+// Root is maximiser. alpha starts at -inf.
+// A subtree: minimiser. beta starts +inf.
+//   A1=10: beta = min(+inf, 10) = 10
+//   A2=-5: beta = min(10, -5) = -5; beta(-5) <= alpha(-inf)? No. Done. Return -5.
+// Root updates alpha = max(-inf, -5) = -5.
+// B subtree: minimiser. beta = +inf. alpha=-5 passed in.
+//   B1=3: beta = min(+inf, 3) = 3; beta(3) <= alpha(-5)? No.
+//   B2=8: beta = min(3, 8) = 3; beta(3) <= alpha(-5)? No. Done. Return 3.
+// Root updates alpha = max(-5, 3) = 3.
+// C subtree: minimiser. beta = +inf. alpha=3 passed in.
+//   C1=-2: beta = min(+inf, -2) = -2; beta(-2) <= alpha(3)? YES → PRUNE C2!
+// Root gets C=-2, but max(3,-2)=3 anyway.
+
+const AB_STEPS = [
+  {
+    active:'R', edges:[], alpha:-Infinity, beta:Infinity, node:'Root',
+    explain:`<span class="step-num">Step 1:</span> Start at <span class="em-ai">Root (AI maximiser)</span>. α=−∞ (AI's best guaranteed score so far), β=+∞ (Human's best guaranteed score so far).`
+  },
+  {
+    active:'A', edges:['e-R-A'], alpha:-Infinity, beta:Infinity, node:'Node A',
+    explain:`<span class="step-num">Step 2:</span> Explore <strong>Move A</strong> — <span class="em-human">Human minimiser</span>. Pass down α=−∞, β=+∞.`
+  },
+  {
+    active:'L0', edges:['e-R-A','e-A-0'], alpha:-Infinity, beta:10, node:'Leaf A₁=+10',
+    explain:`<span class="step-num">Step 3:</span> Leaf A₁ = <span style="color:var(--positive)">+10</span>. Human updates <span class="ab-beta">β = min(+∞, 10) = 10</span>. β=10 > α=−∞, no prune.`
+  },
+  {
+    active:'L1', edges:['e-R-A','e-A-1'], alpha:-Infinity, beta:-5, node:'Leaf A₂=−5',
+    explain:`<span class="step-num">Step 4:</span> Leaf A₂ = <span style="color:var(--negative)">−5</span>. Human updates <span class="ab-beta">β = min(10, −5) = −5</span>. β=−5 > α=−∞, no prune. Node A returns −5.`
+  },
+  {
+    active:'A', edges:['e-R-A'], alpha:-5, beta:Infinity, node:'Root ← A=−5', scoreA:-5,
+    explain:`<span class="step-num">Step 5:</span> <span class="em-human">Node A returns −5</span>. Root (AI) updates <span class="ab-alpha">α = max(−∞, −5) = −5</span>. The AI now knows it can guarantee at least −5.`
+  },
+  {
+    active:'B', edges:['e-R-B'], alpha:-5, beta:Infinity, node:'Node B',
+    explain:`<span class="step-num">Step 6:</span> Explore <strong>Move B</strong> — Human minimiser. Pass α=−5, β=+∞.`
+  },
+  {
+    active:'L2', edges:['e-R-B','e-B-2'], alpha:-5, beta:3, node:'Leaf B₁=+3',
+    explain:`<span class="step-num">Step 7:</span> Leaf B₁ = <span style="color:var(--positive)">+3</span>. Human updates <span class="ab-beta">β = min(+∞, 3) = 3</span>. β=3 > α=−5, no prune.`
+  },
+  {
+    active:'L3', edges:['e-R-B','e-B-3'], alpha:-5, beta:3, node:'Leaf B₂=+8',
+    explain:`<span class="step-num">Step 8:</span> Leaf B₂ = <span style="color:var(--positive)">+8</span>. Human keeps <span class="ab-beta">β = min(3, 8) = 3</span>. β=3 > α=−5, no prune. Node B returns 3.`
+  },
+  {
+    active:'B', edges:['e-R-B'], alpha:3, beta:Infinity, node:'Root ← B=+3', scoreB:3,
+    explain:`<span class="step-num">Step 9:</span> <span class="em-human">Node B returns +3</span>. Root updates <span class="ab-alpha">α = max(−5, 3) = 3</span>. AI's guaranteed minimum is now +3.`
+  },
+  {
+    active:'C', edges:['e-R-C'], alpha:3, beta:Infinity, node:'Node C',
+    explain:`<span class="step-num">Step 10:</span> Explore <strong>Move C</strong> — Human minimiser. Pass α=3, β=+∞.`
+  },
+  {
+    active:'L4', edges:['e-R-C','e-C-4'], alpha:3, beta:-2, node:'Leaf C₁=−2', pruneNext:true,
+    explain:`<span class="step-num">Step 11:</span> Leaf C₁ = <span style="color:var(--negative)">−2</span>. Human updates <span class="ab-beta">β = min(+∞, −2) = −2</span>. Now check: <strong>β(−2) ≤ α(3)?  YES! ✂️ PRUNE!</strong>`
+  },
+  {
+    active:'L4', edges:['e-R-C','e-C-4'], alpha:3, beta:-2, node:'Node C — Pruned!', pruneL5:true,
+    explain:`<span class="step-num">Step 12:</span> <span class="em-prune">✂️ Prune C₂!</span> β(−2) ≤ α(3) means: the AI already has a guaranteed +3 from Move B. Even if C₂ were the best leaf, the Human would still pick min(−2, C₂) ≤ −2 < +3. <strong>There's no point checking C₂ — the AI will never choose Move C.</strong>`
+  },
+  {
+    active:'R', edges:[], alpha:3, beta:Infinity, node:'Root — Best: Move B', scoreR:3, final:'B',
+    explain:`<span class="step-num">Step 13:</span> <span class="em-ai">AI picks MAX(−5, +3, −2) = <span style="color:var(--positive)">+3</span> → Move B wins!</span> Alpha-Beta reached the same answer as plain Minimax — but by skipping C₂, it did <strong>less work</strong>.`
+  },
+];
+
+let abStep = -1;
+let abPrunedNodes = new Set();
+
+function abBuildTree() {
+  const container = document.getElementById('ab-tree');
+  container.innerHTML = '';
+  abPrunedNodes.clear();
+  const tree = document.createElement('div');
+  tree.className = 'tree';
+
+  const rootRow = document.createElement('div'); rootRow.className = 'tree-level';
+  const rootCol = document.createElement('div'); rootCol.className = 'tree-node-col';
+  rootCol.appendChild(makeAbNode('R', 'ai-node', '🤖', 'Root'));
+  rootRow.appendChild(rootCol);
+  tree.appendChild(rootRow);
+  tree.appendChild(makeBranchEdgesAb(['e-R-A','e-R-B','e-R-C'], 3, 120));
+
+  const humanRow = document.createElement('div'); humanRow.className = 'tree-level';
+  ['A','B','C'].forEach((id, i) => {
+    const col = document.createElement('div'); col.className = 'tree-node-col';
+    col.appendChild(makeAbNode(id, 'human-node', '👤', ['Move A','Move B','Move C'][i]));
+    humanRow.appendChild(col);
+  });
+  tree.appendChild(humanRow);
+  tree.appendChild(makeBranchEdgesAb(['e-A-0','e-A-1','e-B-2','e-B-3','e-C-4','e-C-5'], 6, 62));
+
+  const leafRow = document.createElement('div'); leafRow.className = 'tree-level';
+  MM_LEAVES.forEach((val, i) => {
+    const col = document.createElement('div'); col.className = 'tree-node-col';
+    const lbl = val > 0 ? `+${val}` : `${val}`;
+    col.appendChild(makeAbNode(`L${i}`, `leaf-node ${val>0?'score-pos':val<0?'score-neg':'score-zero'}`, lbl, ''));
+    leafRow.appendChild(col);
+  });
+  tree.appendChild(leafRow);
+  container.appendChild(tree);
+  buildDots('ab-dots', AB_STEPS.length);
+}
+
+function makeAbNode(id, cls, icon, sublabel) {
+  const div = document.createElement('div');
+  div.className = `node ${cls}`;
+  div.id = `ab-node-${id}`;
+  div.innerHTML = `<span>${icon}</span><span class="node-label">${sublabel}</span>`;
+  return div;
+}
+
+function makeBranchEdgesAb(ids, count, nodeWidth) {
+  const row = document.createElement('div');
+  row.style.cssText = `display:flex;justify-content:center;gap:0;`;
+  for (let i = 0; i < count; i++) {
+    const col = document.createElement('div');
+    col.style.cssText = `display:flex;flex-direction:column;align-items:center;width:${nodeWidth}px;position:relative;`;
+    const e = document.createElement('div');
+    e.className = 'edge';
+    e.id = `ab-edge-${ids[i]}`;
+    e.style.height = '32px';
+    const pruneIcon = document.createElement('div');
+    pruneIcon.className = 'prune-icon';
+    pruneIcon.id = `ab-prune-${ids[i]}`;
+    pruneIcon.textContent = '✂️';
+    col.appendChild(e);
+    col.appendChild(pruneIcon);
+    row.appendChild(col);
+  }
+  return row;
+}
+
+function abApplyStep(idx) {
+  document.querySelectorAll('#ab-tree .node').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('#ab-tree .edge').forEach(e => e.classList.remove('active'));
+
+  const step = AB_STEPS[idx];
+
+  // Activate node
+  const an = document.getElementById(`ab-node-${step.active}`);
+  if (an) an.classList.add('active');
+
+  // Activate edges
+  step.edges.forEach(eId => {
+    const e = document.getElementById(`ab-edge-${eId}`);
+    if (e) e.classList.add('active');
+  });
+
+  // Score badges
+  ['scoreA','scoreB','scoreR'].forEach(key => {
+    if (step[key] !== undefined) {
+      const nId = key === 'scoreA' ? 'A' : key === 'scoreB' ? 'B' : 'R';
+      const nodeEl = document.getElementById(`ab-node-${nId}`);
+      if (nodeEl) {
+        nodeEl.querySelectorAll('.score-badge').forEach(b => b.remove());
+        const v = step[key];
+        const badge = document.createElement('div');
+        badge.className = `score-badge ${v>0?'score-pos':v<0?'score-neg':'score-zero'}`;
+        badge.textContent = v > 0 ? `+${v}` : `${v}`;
+        nodeEl.appendChild(badge);
+      }
+    }
+  });
+
+  // Pruning
+  if (step.pruneL5) {
+    abPrunedNodes.add('L5');
+    const l5 = document.getElementById('ab-node-L5');
+    if (l5) l5.classList.add('pruned');
+    const e = document.getElementById('ab-edge-e-C-5');
+    if (e) { e.classList.add('pruned'); }
+    const pi = document.getElementById('ab-prune-e-C-5');
+    if (pi) pi.classList.add('visible');
+  }
+
+  // Highlight final
+  if (step.final) {
+    const best = document.getElementById(`ab-node-${step.final}`);
+    if (best) best.style.boxShadow = '0 0 0 4px var(--gold), 0 0 20px var(--gold)';
+  }
+
+  // Update ab values panel
+  const fmtAB = v => v === Infinity ? '+∞' : v === -Infinity ? '−∞' : (v > 0 ? `+${v}` : `${v}`);
+  document.getElementById('ab-alpha-val').textContent = fmtAB(step.alpha);
+  document.getElementById('ab-beta-val').textContent  = fmtAB(step.beta);
+  document.getElementById('ab-node-lbl').textContent  = step.node;
+  document.getElementById('ab-explain').innerHTML = step.explain;
+  updateDots('ab-dots', idx, AB_STEPS.length);
+}
+
+document.getElementById('ab-next').addEventListener('click', () => {
+  abStep++;
+  if (abStep >= AB_STEPS.length) { abStep = AB_STEPS.length - 1; return; }
+  abApplyStep(abStep);
+  document.getElementById('ab-next').disabled = (abStep >= AB_STEPS.length - 1);
+});
+
+document.getElementById('ab-reset').addEventListener('click', () => {
+  abStep = -1;
+  abBuildTree();
+  document.getElementById('ab-explain').innerHTML = `Press <strong>▶ Next Step</strong> to start the walkthrough.`;
+  document.getElementById('ab-alpha-val').textContent = '−∞';
+  document.getElementById('ab-beta-val').textContent  = '+∞';
+  document.getElementById('ab-node-lbl').textContent  = '—';
+  document.getElementById('ab-next').disabled = false;
+});
+
+abBuildTree();
+
+
+/* ════════════════════════════════════════════════════════════════
+   SECTION 3 — Live Score Breakdown Board
+════════════════════════════════════════════════════════════════ */
+let s3Player = 'ai';
+let s3Size   = 1;
+const s3Board = Array.from({length:9}, () => []);
+
+// Reserve pools for s3 (generous — just for placement demo)
+const s3AiReserve    = [1,1,2,2,3,3].map((s,i) => ({id:`ai${i}`,  player:'ai',    size:s, used:false}));
+const s3HumanReserve = [1,1,2,2,3,3].map((s,i) => ({id:`hu${i}`,  player:'human', size:s, used:false}));
+
+function s3GetState() {
+  return { board: s3Board, humanReserve: s3HumanReserve, aiReserve: s3AiReserve };
+}
+
+function s3PickPlayer(p) {
+  s3Player = p;
+  document.getElementById('s3-pick-ai').className    = `toggle-btn ${p==='ai'?'active-ai':''}`;
+  document.getElementById('s3-pick-human').className = `toggle-btn ${p==='human'?'active-human':''}`;
+}
+function s3PickSize(s) {
+  s3Size = s;
+  [1,2,3].forEach(n => {
+    document.getElementById(`s3-size-${n}`).className = `toggle-btn ${n===s ? (s3Player==='ai'?'active-ai':'active-human') : ''}`;
+  });
+}
+function s3Clear() {
+  for (let i = 0; i < 9; i++) s3Board[i] = [];
+  s3AiReserve.forEach(p => p.used = false);
+  s3HumanReserve.forEach(p => p.used = false);
+  s3RenderBoard();
+  s3RenderScore();
+}
+
+function s3RenderBoard() {
+  const boardEl = document.getElementById('s3-board');
+  boardEl.innerHTML = '';
+  for (let i = 0; i < 9; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.title = `Cell ${i}`;
+    const t = top(s3Board[i]);
+    if (t) {
+      const piece = document.createElement('div');
+      piece.className = `piece ${t.player === 'ai' ? 'ai-piece' : 'human-piece'} size-${t.size}`;
+      piece.textContent = t.player === 'ai' ? '🤖' : '👤';
+      cell.appendChild(piece);
+    }
+    cell.addEventListener('click', () => s3PlaceOrGobble(i));
+    boardEl.appendChild(cell);
+  }
+}
+
+function s3PlaceOrGobble(cellIdx) {
+  const t = top(s3Board[cellIdx]);
+  if (t && t.size >= s3Size) return; // can't gobble equal or larger
+
+  // Find an available piece from reserve
+  const reserve = s3Player === 'ai' ? s3AiReserve : s3HumanReserve;
+  const avail = reserve.find(p => !p.used && p.size === s3Size);
+  if (!avail) { return; } // no pieces of that size left
+
+  avail.used = true;
+  s3Board[cellIdx].push({ id: avail.id, player: s3Player, size: s3Size });
+  s3RenderBoard();
+  s3RenderScore();
+}
+
+function s3RenderScore() {
+  const state = s3GetState();
+  const result = evaluate(state);
+  const { score, breakdown, centerBonus, reserveBonus } = result;
+
+  // Total
+  const totalEl = document.getElementById('s3-total');
+  totalEl.className = `score-total ${score > 0 ? 'winning' : score < 0 ? 'losing' : 'neutral'}`;
+  const sign = score > 0 ? '+' : '';
+  totalEl.innerHTML = `Score: <strong>${sign}${score}</strong><br><span style="font-size:0.75rem;font-weight:400">${score > 0 ? '🤖 AI advantage' : score < 0 ? '👤 Human advantage' : 'Balanced'}</span>`;
+
+  // Breakdown table
+  const tbody = document.getElementById('s3-breakdown');
+  tbody.innerHTML = '';
+  const lineNames = ['Row 1','Row 2','Row 3','Col 1','Col 2','Col 3','Diag ↘','Diag ↙'];
+  breakdown.forEach((row, i) => {
+    const tr = document.createElement('tr');
+    const sc = row.lineScore;
+    tr.innerHTML = `
+      <td>${lineNames[i]} [${row.line.join(',')}]</td>
+      <td>${row.aiCount > 0 ? `${row.aiCount}×🤖` : '—'}</td>
+      <td>${row.humanCount > 0 ? `${row.humanCount}×👤` : '—'}</td>
+      <td class="score-cell ${sc>0?'pos':sc<0?'neg':'zero'}">${sc>0?'+'+sc:sc}</td>`;
+    tbody.appendChild(tr);
+  });
+  // Extra rows
+  const extras = document.getElementById('s3-extras');
+  const fmt = v => v > 0 ? `<span style="color:var(--positive)">+${v}</span>` : v < 0 ? `<span style="color:var(--negative)">${v}</span>` : `<span style="color:var(--muted)">0</span>`;
+  extras.innerHTML = `
+    <div style="margin-bottom:4px">Center control bonus: ${fmt(centerBonus)}</div>
+    <div style="margin-bottom:4px">Large piece reserve advantage: ${fmt(reserveBonus)}</div>
+    <div style="font-weight:700;color:var(--text);margin-top:6px;border-top:1px solid var(--border);padding-top:6px">Total = ${fmt(score)}</div>
+  `;
+}
+
+// Init section 3
+s3RenderBoard();
+s3RenderScore();
+
+
+/* ════════════════════════════════════════════════════════════════
+   SECTION 4 — "Watch the AI Think" Live Move Tracer
+════════════════════════════════════════════════════════════════ */
+
+// Preset board: AI has size-2 in center (4), Human has size-1 in corner (0)
+function s4InitState() {
+  return {
+    board: Array.from({length:9}, (_,i) => {
+      if (i === 4) return [{id:'ai_c', player:'ai',    size:2}];
+      if (i === 0) return [{id:'hu_c', player:'human', size:1}];
+      return [];
+    }),
+    humanReserve: [
+      {id:'h1a', player:'human', size:1, used:true},
+      {id:'h1b', player:'human', size:1, used:false},
+      {id:'h2a', player:'human', size:2, used:false},
+      {id:'h2b', player:'human', size:2, used:false},
+      {id:'h3a', player:'human', size:3, used:false},
+      {id:'h3b', player:'human', size:3, used:false},
+    ],
+    aiReserve: [
+      {id:'a1a', player:'ai', size:1, used:false},
+      {id:'a1b', player:'ai', size:1, used:false},
+      {id:'a2a', player:'ai', size:2, used:true},
+      {id:'a2b', player:'ai', size:2, used:false},
+      {id:'a3a', player:'ai', size:3, used:false},
+      {id:'a3b', player:'ai', size:3, used:false},
+    ],
+  };
+}
+
+let s4State = s4InitState();
+let s4BestMove = null;
+
+function s4RenderBoard(highlightCell) {
+  const boardEl = document.getElementById('s4-board');
+  boardEl.innerHTML = '';
+  for (let i = 0; i < 9; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell' + (i === highlightCell ? ' highlighted' : '');
+    const t = top(s4State.board[i]);
+    if (t) {
+      const piece = document.createElement('div');
+      piece.className = `piece ${t.player === 'ai' ? 'ai-piece' : 'human-piece'} size-${t.size}`;
+      piece.textContent = t.player === 'ai' ? '🤖' : '👤';
+      cell.appendChild(piece);
+    }
+    boardEl.appendChild(cell);
+  }
+}
+
+document.getElementById('s4-run').addEventListener('click', () => {
+  const btn = document.getElementById('s4-run');
+  btn.disabled = true;
+
+  const statusEl = document.getElementById('s4-status');
+  statusEl.className = 'status-badge badge-thinking';
+  statusEl.textContent = '⚙️ Thinking…';
+
+  // Slight delay for UX
+  setTimeout(() => {
+    const state = cloneState(s4State);
+    const { bestMove, bestVal, moveScores } = getBestMoveWithScores(state);
+
+    s4BestMove = bestMove;
+    const destCell = bestMove ? bestMove.toCell : null;
+    s4RenderBoard(destCell);
+
+    statusEl.className = 'status-badge badge-done';
+    statusEl.textContent = '✅ Done!';
+
+    const bestLbl = document.getElementById('s4-best-label');
+    if (bestMove) {
+      bestLbl.innerHTML = `<strong>Best move:</strong> <span style="color:var(--gold)">${moveScores[0].label}</span> (score: <strong style="color:var(--gold)">${bestVal > 0 ? '+' + bestVal : bestVal}</strong>)`;
+    } else {
+      bestLbl.textContent = 'No moves available.';
+    }
+
+    // Log
+    const logEl = document.getElementById('s4-log');
+    logEl.innerHTML = '';
+    moveScores.forEach((ms, i) => {
+      const item = document.createElement('div');
+      item.className = `move-log-item ${i === 0 ? 'best' : ''}`;
+      const sc = ms.score;
+      const scCls = sc > 0 ? 'pos' : sc < 0 ? 'neg' : 'zero';
+      item.innerHTML = `
+        <span class="move-label">${i === 0 ? '🥇 ' : (i+1)+'. '}${ms.label}</span>
+        <span class="move-score score-cell ${scCls}">${sc > 0 ? '+' + sc : sc}</span>`;
+      logEl.appendChild(item);
+    });
+
+    // Bar chart
+    const barsEl = document.getElementById('s4-bars');
+    barsEl.innerHTML = '';
+    if (moveScores.length) {
+      const maxAbs = Math.max(...moveScores.map(m => Math.abs(m.score)), 1);
+      moveScores.forEach((ms, i) => {
+        const pct = Math.max(4, Math.round((Math.abs(ms.score) / maxAbs) * 100));
+        const isBest = i === 0;
+        const isPos  = ms.score >= 0;
+        const sc = ms.score;
+        const item = document.createElement('div');
+        item.className = 'bar-item';
+        item.innerHTML = `
+          <div class="bar-label" title="${ms.label}">${isBest ? '🥇' : (i+1)+'.'} ${ms.label}</div>
+          <div class="bar-track">
+            <div class="bar-fill ${isBest ? 'best-bar' : isPos ? 'pos-bar' : 'neg-bar'}" style="width:${pct}%"></div>
+          </div>
+          <div class="bar-score ${isBest ? '' : (isPos ? 'pos' : 'neg')}" style="color:${isBest ? 'var(--gold)' : isPos ? 'var(--positive)' : 'var(--negative)'}">
+            ${sc > 0 ? '+' + sc : sc}
+          </div>`;
+        barsEl.appendChild(item);
+      });
+    }
+
+    document.getElementById('s4-log-wrap').style.display = 'block';
+    btn.disabled = false;
+  }, 80);
+});
+
+document.getElementById('s4-reset').addEventListener('click', () => {
+  s4State = s4InitState();
+  s4BestMove = null;
+  s4RenderBoard(null);
+  document.getElementById('s4-status').className = 'status-badge badge-idle';
+  document.getElementById('s4-status').textContent = '⏳ Waiting — click Run AI';
+  document.getElementById('s4-best-label').textContent = '';
+  document.getElementById('s4-log-wrap').style.display = 'none';
+  document.getElementById('s4-run').disabled = false;
+});
+
+// Init section 4
+s4RenderBoard(null);
+
+</script>
+</body>
+</html>
