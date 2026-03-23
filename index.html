@@ -20,6 +20,14 @@
       <span id="status-text">Your turn</span>
     </div>
 
+    <!-- Win/Draw card (inline, non-blocking) -->
+    <div id="game-over-card" class="hidden">
+      <div id="game-over-emoji"></div>
+      <h2 id="game-over-title"></h2>
+      <p id="game-over-message"></p>
+      <button id="play-again-btn" class="btn-primary">Play Again</button>
+    </div>
+
     <div id="game-area">
       <!-- AI reserve (top) -->
       <div id="ai-reserve" class="reserve-area" data-player="ai">
@@ -52,16 +60,6 @@
     <div id="controls">
       <button id="new-game-btn" class="btn-primary">New Game</button>
       <button id="rules-btn" class="btn-secondary">How to Play</button>
-    </div>
-
-    <!-- Win/Draw overlay -->
-    <div id="game-over-overlay" class="hidden">
-      <div id="game-over-card">
-        <div id="game-over-emoji"></div>
-        <h2 id="game-over-title"></h2>
-        <p id="game-over-message"></p>
-        <button id="play-again-btn" class="btn-primary">Play Again</button>
-      </div>
     </div>
 
     <!-- Rules modal -->
