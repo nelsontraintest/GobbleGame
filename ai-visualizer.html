@@ -459,6 +459,10 @@ const WIN_LINES = [
   [0,4,8],[2,4,6]
 ];
 
+const WIN_SCORE = 100000;
+const INF = 1e9;
+const AI_SEARCH_DEPTH = 2; // depth used by the live move tracer (Section 4)
+
 function cloneState(state) {
   return {
     board: state.board.map(stack => stack.map(p => ({...p}))),
@@ -517,7 +521,6 @@ function checkWinner(state) {
 }
 
 function evaluate(state) {
-  const WIN_SCORE = 100000;
   const winner = checkWinner(state);
   if (winner === 'ai')    return { score: WIN_SCORE,  breakdown: [], centerBonus: 0, reserveBonus: 0 };
   if (winner === 'human') return { score: -WIN_SCORE, breakdown: [], centerBonus: 0, reserveBonus: 0 };
@@ -554,7 +557,6 @@ function evaluate(state) {
 }
 
 function minimaxScore(state, depth, alpha, beta, maximising) {
-  const INF = 1e9, WIN_SCORE = 100000;
   const winner = checkWinner(state);
   if (winner === 'ai')    return WIN_SCORE + depth;
   if (winner === 'human') return -(WIN_SCORE + depth);
@@ -588,7 +590,6 @@ function minimaxScore(state, depth, alpha, beta, maximising) {
 }
 
 function getBestMoveWithScores(state) {
-  const INF = 1e9;
   const moves = generateMoves(state, 'ai');
   if (!moves.length) return { bestMove: null, moveScores: [] };
   let bestVal = -INF, bestMove = moves[0];
@@ -596,7 +597,7 @@ function getBestMoveWithScores(state) {
   for (const move of moves) {
     const saved = cloneState(state);
     applyMove(state, move);
-    const val = minimaxScore(state, 2, -INF, INF, false);
+    const val = minimaxScore(state, AI_SEARCH_DEPTH, -INF, INF, false);
     state.board = saved.board; state.humanReserve = saved.humanReserve; state.aiReserve = saved.aiReserve;
     const label = move.type === 'place'
       ? `Place size-${move.size} → cell ${move.toCell}`
