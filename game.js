@@ -36,18 +36,40 @@ function createPieces(player) {
   ];
 }
 
-function initGame() {
+function initGame(firstTurn = 'human') {
   gameState = {
     board: Array.from({ length: 9 }, () => []),
     humanReserve: createPieces('human'),
     aiReserve:    createPieces('ai'),
-    turn: 'human',
+    turn: firstTurn,
   };
   selection = null;
   gameOver  = false;
   aiThinking = false;
   lastMovedPieceId = null;
   render();
+  if (firstTurn === 'ai') {
+    triggerAI();
+  }
+}
+
+function showFirstTurnModal() {
+  const overlay = document.getElementById('first-turn-overlay');
+  overlay.classList.remove('hidden');
+
+  function onChoice(e) {
+    const btn = e.target.closest('.first-turn-btn');
+    if (!btn) return;
+    let choice = btn.dataset.choice;
+    if (choice === 'random') {
+      choice = Math.random() < 0.5 ? 'human' : 'ai';
+    }
+    overlay.classList.add('hidden');
+    document.getElementById('first-turn-options').removeEventListener('click', onChoice);
+    initGame(choice);
+  }
+
+  document.getElementById('first-turn-options').addEventListener('click', onChoice);
 }
 
 /* ================================================================
@@ -436,10 +458,10 @@ function showGameOver(winner) {
  * UI Event Bindings
  * ================================================================ */
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('new-game-btn').addEventListener('click', initGame);
+  document.getElementById('new-game-btn').addEventListener('click', showFirstTurnModal);
   document.getElementById('play-again-btn').addEventListener('click', () => {
     document.getElementById('game-over-overlay').classList.add('hidden');
-    initGame();
+    showFirstTurnModal();
   });
 
   document.getElementById('rules-btn').addEventListener('click', () => {
@@ -459,5 +481,5 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.cancelable) e.preventDefault();
   }, { passive: false });
 
-  initGame();
+  showFirstTurnModal();
 });

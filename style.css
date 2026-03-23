@@ -321,7 +321,8 @@ header h1 {
 }
 
 #game-over-overlay,
-#rules-overlay {
+#rules-overlay,
+#first-turn-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.75);
@@ -335,7 +336,8 @@ header h1 {
 }
 
 #game-over-card,
-#rules-card {
+#rules-card,
+#first-turn-card {
   background: var(--surface);
   border-radius: 20px;
   border: 1px solid var(--border);
@@ -412,6 +414,26 @@ header h1 {
   display: block;
   width: 100%;
   margin-top: 20px;
+}
+
+/* Who goes first modal */
+#first-turn-card h2 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+#first-turn-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.first-turn-btn {
+  width: 100%;
+  font-size: 1.1rem;
+  padding: 14px;
 }
 
 /* ===== ANIMATIONS ===== */
