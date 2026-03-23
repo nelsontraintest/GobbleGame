@@ -429,7 +429,7 @@ function renderBoard(winLine) {
  * Game over
  * ================================================================ */
 function showGameOver(winner) {
-  const overlay = document.getElementById('game-over-overlay');
+  const card    = document.getElementById('game-over-card');
   const emoji   = document.getElementById('game-over-emoji');
   const title   = document.getElementById('game-over-title');
   const msg     = document.getElementById('game-over-message');
@@ -451,7 +451,7 @@ function showGameOver(winner) {
     setStatus("🤝 It's a draw!", '');
   }
 
-  overlay.classList.remove('hidden');
+  card.classList.remove('hidden');
 }
 
 /* ================================================================
@@ -460,7 +460,7 @@ function showGameOver(winner) {
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('new-game-btn').addEventListener('click', showFirstTurnModal);
   document.getElementById('play-again-btn').addEventListener('click', () => {
-    document.getElementById('game-over-overlay').classList.add('hidden');
+    document.getElementById('game-over-card').classList.add('hidden');
     showFirstTurnModal();
   });
 
