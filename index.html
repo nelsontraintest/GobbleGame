@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Gobble Game">
+  <title>Gobble Game</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>🦃 Gobble Game</h1>
+      <p class="subtitle">Big-Eat-Small Tic-Tac-Toe</p>
+    </header>
+
+    <div id="status-bar">
+      <span id="status-text">Your turn</span>
+    </div>
+
+    <div id="game-area">
+      <!-- AI reserve (top) -->
+      <div id="ai-reserve" class="reserve-area" data-player="ai">
+        <div class="reserve-label">🤖 AI Pieces</div>
+        <div class="reserve-pieces" id="ai-pieces"></div>
+      </div>
+
+      <!-- Game board -->
+      <div id="board-wrapper">
+        <div id="board">
+          <div class="cell" data-index="0"></div>
+          <div class="cell" data-index="1"></div>
+          <div class="cell" data-index="2"></div>
+          <div class="cell" data-index="3"></div>
+          <div class="cell" data-index="4"></div>
+          <div class="cell" data-index="5"></div>
+          <div class="cell" data-index="6"></div>
+          <div class="cell" data-index="7"></div>
+          <div class="cell" data-index="8"></div>
+        </div>
+      </div>
+
+      <!-- Human reserve (bottom) -->
+      <div id="human-reserve" class="reserve-area" data-player="human">
+        <div class="reserve-label">👤 Your Pieces</div>
+        <div class="reserve-pieces" id="human-pieces"></div>
+      </div>
+    </div>
+
+    <div id="controls">
+      <button id="new-game-btn" class="btn-primary">New Game</button>
+      <button id="rules-btn" class="btn-secondary">How to Play</button>
+    </div>
+
+    <!-- Win/Draw overlay -->
+    <div id="game-over-overlay" class="hidden">
+      <div id="game-over-card">
+        <div id="game-over-emoji"></div>
+        <h2 id="game-over-title"></h2>
+        <p id="game-over-message"></p>
+        <button id="play-again-btn" class="btn-primary">Play Again</button>
+      </div>
+    </div>
+
+    <!-- Rules modal -->
+    <div id="rules-overlay" class="hidden">
+      <div id="rules-card">
+        <h2>How to Play</h2>
+        <div class="rules-content">
+          <h3>Setup</h3>
+          <p>Each player has <strong>6 pieces</strong>: 2 small, 2 medium, 2 large. You play Blue 🔵, AI plays Red 🔴.</p>
+
+          <h3>Your Turn</h3>
+          <ul>
+            <li><strong>Place</strong> a piece from your reserve: tap a reserve piece, then tap a valid board cell.</li>
+            <li><strong>Move</strong> a piece on the board: tap your visible piece, then tap a valid destination.</li>
+          </ul>
+
+          <h3>Gobbling</h3>
+          <ul>
+            <li>A <strong>larger piece can cover</strong> a smaller piece of either color.</li>
+            <li>Only the <strong>top (visible) piece</strong> in each cell counts toward winning.</li>
+            <li>Covered pieces may reappear if the top piece moves away!</li>
+          </ul>
+
+          <h3>Winning</h3>
+          <p>Get <strong>3 of your visible pieces in a row</strong> — horizontally, vertically, or diagonally.</p>
+
+          <h3>Tip</h3>
+          <p>Watch out — the AI can gobble your pieces and steal your winning line!</p>
+        </div>
+        <button id="close-rules-btn" class="btn-primary">Got it!</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="ai.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
