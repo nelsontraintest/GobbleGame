@@ -102,7 +102,12 @@
   .node.ai-node { background: rgba(59,130,246,0.15); border-color: var(--ai); }
   .node.human-node { background: rgba(239,68,68,0.15); border-color: var(--human); }
   .node.leaf-node { background: #1a2744; border-color: var(--border); font-size: 1rem; font-weight: 800; }
-  .node.active { box-shadow: 0 0 0 4px var(--highlight), 0 0 20px var(--highlight); border-color: var(--highlight) !important; background: rgba(251,191,36,0.2) !important; }
+  @keyframes nodePulse {
+    0%   { box-shadow: 0 0 0 4px var(--highlight), 0 0 20px var(--highlight); }
+    50%  { box-shadow: 0 0 0 8px var(--highlight), 0 0 36px var(--highlight), 0 0 6px #fff4; }
+    100% { box-shadow: 0 0 0 4px var(--highlight), 0 0 20px var(--highlight); }
+  }
+  .node.active { box-shadow: 0 0 0 4px var(--highlight), 0 0 20px var(--highlight); border-color: var(--highlight) !important; background: rgba(251,191,36,0.2) !important; animation: nodePulse 0.6s ease-out 1; }
   .node.done { opacity: 0.7; }
   .node.pruned { background: rgba(71,85,105,0.3) !important; border-color: var(--prune) !important; color: var(--prune) !important; }
   .node .score-badge {
@@ -131,12 +136,20 @@
   .h-connector { height: 2px; background: var(--border); transition: background .3s; }
   .h-connector.pruned { background: var(--prune); opacity: .4; }
 
+  @keyframes explainFadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
   /* ── Explanation panel ── */
   .explain-panel {
     background: #0f172a; border: 1px solid var(--border);
     border-radius: 10px; padding: 16px 20px;
     min-height: 70px; margin-top: 20px;
     font-size: 0.9rem; line-height: 1.6;
+  }
+  .explain-panel.updated {
+    animation: explainFadeIn 0.35s ease-out;
   }
   .explain-panel .step-num { color: var(--gold); font-weight: 700; }
   .explain-panel .em-ai { color: var(--ai); font-weight: 600; }
@@ -752,9 +765,12 @@ function mmApplyStep(idx) {
 
   const step = MM_STEPS[idx];
 
-  // Activate current node
+  // Activate current node (force animation to replay via reflow)
   const activeNode = document.getElementById(`mm-node-${step.active}`);
-  if (activeNode) activeNode.classList.add('active');
+  if (activeNode) {
+    activeNode.classList.add('active');
+    replayNodePulse(activeNode);
+  }
 
   // Activate edges
   step.edges.forEach(eId => {
@@ -783,7 +799,28 @@ function mmApplyStep(idx) {
   }
 
   document.getElementById('mm-explain').innerHTML = step.explain;
+  flashExplain('mm-explain');
   updateDots('mm-dots', idx, MM_STEPS.length);
+}
+
+function flashExplain(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('updated');
+  // Force reflow so the animation re-fires even on the same element
+  void el.offsetWidth;
+  el.classList.add('updated');
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// Re-trigger a CSS animation on a node that may already have it running
+function replayNodePulse(node) {
+  // First reflow: let the browser register the 'active' class before resetting
+  void node.offsetWidth;
+  node.style.animation = 'none';
+  // Second reflow: flush the 'none' so the class-defined animation can restart
+  void node.offsetWidth;
+  node.style.animation = '';
 }
 
 function updateDots(containerId, activeIdx, total) {
@@ -980,9 +1017,12 @@ function abApplyStep(idx) {
 
   const step = AB_STEPS[idx];
 
-  // Activate node
+  // Activate node (force animation to replay via reflow)
   const an = document.getElementById(`ab-node-${step.active}`);
-  if (an) an.classList.add('active');
+  if (an) {
+    an.classList.add('active');
+    replayNodePulse(an);
+  }
 
   // Activate edges
   step.edges.forEach(eId => {
@@ -1029,6 +1069,7 @@ function abApplyStep(idx) {
   document.getElementById('ab-beta-val').textContent  = fmtAB(step.beta);
   document.getElementById('ab-node-lbl').textContent  = step.node;
   document.getElementById('ab-explain').innerHTML = step.explain;
+  flashExplain('ab-explain');
   updateDots('ab-dots', idx, AB_STEPS.length);
 }
 
