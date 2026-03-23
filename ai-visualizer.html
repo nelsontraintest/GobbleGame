@@ -642,20 +642,20 @@ const MM_ROOT_VAL = Math.max(...MM_HUMAN_VALS); // 3 → B
 // edgeIds:  e-R-A, e-R-B, e-R-C, e-A-0, e-A-1, e-B-2, e-B-3, e-C-4, e-C-5
 
 const MM_STEPS = [
-  { active: 'R', edges: [], explain: `<span class="step-num">Step 1:</span> The <span class="em-ai">🤖 AI</span> is at the root. It wants to <strong>maximise</strong> its score. It will examine all three moves: A, B, and C.` },
-  { active: 'A', edges: ['e-R-A'], explain: `<span class="step-num">Step 2:</span> AI explores <strong>Move A</strong> (Human's turn). The <span class="em-human">👤 Human</span> will <strong>minimise</strong>, so they'll pick the worst outcome for the AI.` },
-  { active: 'L0', edges: ['e-R-A','e-A-0'], explain: `<span class="step-num">Step 3:</span> Evaluate leaf <strong>A₁ = +10</strong>. A score of +10 means the AI is in a strong position at this future state.` },
-  { active: 'L1', edges: ['e-R-A','e-A-1'], explain: `<span class="step-num">Step 4:</span> Evaluate leaf <strong>A₂ = −5</strong>. The AI is losing in this branch.` },
-  { active: 'A', edges: ['e-R-A'], score: { id: 'A', val: -5 }, explain: `<span class="step-num">Step 5:</span> <span class="em-human">Human picks MIN(+10, −5) = <span style="color:var(--negative)">−5</span></span>. The human would choose the path that hurts the AI most.` },
-  { active: 'B', edges: ['e-R-B'], explain: `<span class="step-num">Step 6:</span> AI now explores <strong>Move B</strong>. Human to respond again.` },
-  { active: 'L2', edges: ['e-R-B','e-B-2'], explain: `<span class="step-num">Step 7:</span> Evaluate leaf <strong>B₁ = +3</strong>.` },
-  { active: 'L3', edges: ['e-R-B','e-B-3'], explain: `<span class="step-num">Step 8:</span> Evaluate leaf <strong>B₂ = +8</strong>.` },
-  { active: 'B', edges: ['e-R-B'], score: { id: 'B', val: 3 }, explain: `<span class="step-num">Step 9:</span> <span class="em-human">Human picks MIN(+3, +8) = <span style="color:var(--positive)">+3</span></span>. Human still minimises — +3 is worse for AI than +8.` },
-  { active: 'C', edges: ['e-R-C'], explain: `<span class="step-num">Step 10:</span> AI explores <strong>Move C</strong>.` },
-  { active: 'L4', edges: ['e-R-C','e-C-4'], explain: `<span class="step-num">Step 11:</span> Evaluate leaf <strong>C₁ = −2</strong>.` },
-  { active: 'L5', edges: ['e-R-C','e-C-5'], explain: `<span class="step-num">Step 12:</span> Evaluate leaf <strong>C₂ = +7</strong>.` },
-  { active: 'C', edges: ['e-R-C'], score: { id: 'C', val: -2 }, explain: `<span class="step-num">Step 13:</span> <span class="em-human">Human picks MIN(−2, +7) = <span style="color:var(--negative)">−2</span></span>.` },
-  { active: 'R', edges: [], score: { id: 'R', val: 3 }, final: 'B', explain: `<span class="step-num">Step 14:</span> <span class="em-ai">AI picks MAX(−5, +3, −2) = <span style="color:var(--positive)">+3</span> → chooses <strong>Move B</strong>!</span> This is the best outcome the AI can guarantee, assuming the human plays optimally.` },
+  { active: 'R', edges: [], explain: "<span class=\"step-num\">Step 1:</span> The <span class=\"em-ai\">\u{1F916} AI</span> is at the root. It wants to <strong>maximise</strong> its score. It will examine all three moves: A, B, and C." },
+  { active: 'A', edges: ['e-R-A'], explain: "<span class=\"step-num\">Step 2:</span> AI explores <strong>Move A</strong> (Human\u2019s turn). The <span class=\"em-human\">\u{1F464} Human</span> will <strong>minimise</strong>, so they\u2019ll pick the worst outcome for the AI." },
+  { active: 'L0', edges: ['e-R-A','e-A-0'], explain: "<span class=\"step-num\">Step 3:</span> Evaluate leaf <strong>A\u2081 = +10</strong>. A score of +10 means the AI is in a strong position at this future state." },
+  { active: 'L1', edges: ['e-R-A','e-A-1'], explain: "<span class=\"step-num\">Step 4:</span> Evaluate leaf <strong>A\u2082 = \u22125</strong>. The AI is losing in this branch." },
+  { active: 'A', edges: ['e-R-A'], score: { id: 'A', val: -5 }, explain: "<span class=\"step-num\">Step 5:</span> <span class=\"em-human\">Human picks MIN(+10, \u22125) = <span style=\"color:var(--negative)\">\u22125</span></span>. The human would choose the path that hurts the AI most." },
+  { active: 'B', edges: ['e-R-B'], explain: "<span class=\"step-num\">Step 6:</span> AI now explores <strong>Move B</strong>. Human to respond again." },
+  { active: 'L2', edges: ['e-R-B','e-B-2'], explain: "<span class=\"step-num\">Step 7:</span> Evaluate leaf <strong>B\u2081 = +3</strong>." },
+  { active: 'L3', edges: ['e-R-B','e-B-3'], explain: "<span class=\"step-num\">Step 8:</span> Evaluate leaf <strong>B\u2082 = +8</strong>." },
+  { active: 'B', edges: ['e-R-B'], score: { id: 'B', val: 3 }, explain: "<span class=\"step-num\">Step 9:</span> <span class=\"em-human\">Human picks MIN(+3, +8) = <span style=\"color:var(--positive)\">+3</span></span>. Human still minimises \u2014 +3 is worse for AI than +8." },
+  { active: 'C', edges: ['e-R-C'], explain: "<span class=\"step-num\">Step 10:</span> AI explores <strong>Move C</strong>." },
+  { active: 'L4', edges: ['e-R-C','e-C-4'], explain: "<span class=\"step-num\">Step 11:</span> Evaluate leaf <strong>C\u2081 = \u22122</strong>." },
+  { active: 'L5', edges: ['e-R-C','e-C-5'], explain: "<span class=\"step-num\">Step 12:</span> Evaluate leaf <strong>C\u2082 = +7</strong>." },
+  { active: 'C', edges: ['e-R-C'], score: { id: 'C', val: -2 }, explain: "<span class=\"step-num\">Step 13:</span> <span class=\"em-human\">Human picks MIN(\u22122, +7) = <span style=\"color:var(--negative)\">\u22122</span></span>." },
+  { active: 'R', edges: [], score: { id: 'R', val: 3 }, final: 'B', explain: "<span class=\"step-num\">Step 14:</span> <span class=\"em-ai\">AI picks MAX(\u22125, +3, \u22122) = <span style=\"color:var(--positive)\">+3</span> \u2192 chooses <strong>Move B</strong>!</span> This is the best outcome the AI can guarantee, assuming the human plays optimally." },
 ];
 
 let mmStep = -1;
@@ -855,55 +855,55 @@ mmBuildTree();
 const AB_STEPS = [
   {
     active:'R', edges:[], alpha:-Infinity, beta:Infinity, node:'Root',
-    explain:`<span class="step-num">Step 1:</span> Start at <span class="em-ai">Root (AI maximiser)</span>. α=−∞ (AI's best guaranteed score so far), β=+∞ (Human's best guaranteed score so far).`
+    explain:"<span class=\"step-num\">Step 1:</span> Start at <span class=\"em-ai\">Root (AI maximiser)</span>. \u03B1=\u2212\u221E (AI\u2019s best guaranteed score so far), \u03B2=+\u221E (Human\u2019s best guaranteed score so far)."
   },
   {
     active:'A', edges:['e-R-A'], alpha:-Infinity, beta:Infinity, node:'Node A',
-    explain:`<span class="step-num">Step 2:</span> Explore <strong>Move A</strong> — <span class="em-human">Human minimiser</span>. Pass down α=−∞, β=+∞.`
+    explain:"<span class=\"step-num\">Step 2:</span> Explore <strong>Move A</strong> \u2014 <span class=\"em-human\">Human minimiser</span>. Pass down \u03B1=\u2212\u221E, \u03B2=+\u221E."
   },
   {
-    active:'L0', edges:['e-R-A','e-A-0'], alpha:-Infinity, beta:10, node:'Leaf A₁=+10',
-    explain:`<span class="step-num">Step 3:</span> Leaf A₁ = <span style="color:var(--positive)">+10</span>. Human updates <span class="ab-beta">β = min(+∞, 10) = 10</span>. β=10 > α=−∞, no prune.`
+    active:'L0', edges:['e-R-A','e-A-0'], alpha:-Infinity, beta:10, node:'Leaf A\u2081=+10',
+    explain:"<span class=\"step-num\">Step 3:</span> Leaf A\u2081 = <span style=\"color:var(--positive)\">+10</span>. Human updates <span class=\"ab-beta\">\u03B2 = min(+\u221E, 10) = 10</span>. \u03B2=10 > \u03B1=\u2212\u221E, no prune."
   },
   {
-    active:'L1', edges:['e-R-A','e-A-1'], alpha:-Infinity, beta:-5, node:'Leaf A₂=−5',
-    explain:`<span class="step-num">Step 4:</span> Leaf A₂ = <span style="color:var(--negative)">−5</span>. Human updates <span class="ab-beta">β = min(10, −5) = −5</span>. β=−5 > α=−∞, no prune. Node A returns −5.`
+    active:'L1', edges:['e-R-A','e-A-1'], alpha:-Infinity, beta:-5, node:'Leaf A\u2082=\u22125',
+    explain:"<span class=\"step-num\">Step 4:</span> Leaf A\u2082 = <span style=\"color:var(--negative)\">\u22125</span>. Human updates <span class=\"ab-beta\">\u03B2 = min(10, \u22125) = \u22125</span>. \u03B2=\u22125 > \u03B1=\u2212\u221E, no prune. Node A returns \u22125."
   },
   {
-    active:'A', edges:['e-R-A'], alpha:-5, beta:Infinity, node:'Root ← A=−5', scoreA:-5,
-    explain:`<span class="step-num">Step 5:</span> <span class="em-human">Node A returns −5</span>. Root (AI) updates <span class="ab-alpha">α = max(−∞, −5) = −5</span>. The AI now knows it can guarantee at least −5.`
+    active:'A', edges:['e-R-A'], alpha:-5, beta:Infinity, node:'Root \u2190 A=\u22125', scoreA:-5,
+    explain:"<span class=\"step-num\">Step 5:</span> <span class=\"em-human\">Node A returns \u22125</span>. Root (AI) updates <span class=\"ab-alpha\">\u03B1 = max(\u2212\u221E, \u22125) = \u22125</span>. The AI now knows it can guarantee at least \u22125."
   },
   {
     active:'B', edges:['e-R-B'], alpha:-5, beta:Infinity, node:'Node B',
-    explain:`<span class="step-num">Step 6:</span> Explore <strong>Move B</strong> — Human minimiser. Pass α=−5, β=+∞.`
+    explain:"<span class=\"step-num\">Step 6:</span> Explore <strong>Move B</strong> \u2014 Human minimiser. Pass \u03B1=\u22125, \u03B2=+\u221E."
   },
   {
-    active:'L2', edges:['e-R-B','e-B-2'], alpha:-5, beta:3, node:'Leaf B₁=+3',
-    explain:`<span class="step-num">Step 7:</span> Leaf B₁ = <span style="color:var(--positive)">+3</span>. Human updates <span class="ab-beta">β = min(+∞, 3) = 3</span>. β=3 > α=−5, no prune.`
+    active:'L2', edges:['e-R-B','e-B-2'], alpha:-5, beta:3, node:'Leaf B\u2081=+3',
+    explain:"<span class=\"step-num\">Step 7:</span> Leaf B\u2081 = <span style=\"color:var(--positive)\">+3</span>. Human updates <span class=\"ab-beta\">\u03B2 = min(+\u221E, 3) = 3</span>. \u03B2=3 > \u03B1=\u22125, no prune."
   },
   {
-    active:'L3', edges:['e-R-B','e-B-3'], alpha:-5, beta:3, node:'Leaf B₂=+8',
-    explain:`<span class="step-num">Step 8:</span> Leaf B₂ = <span style="color:var(--positive)">+8</span>. Human keeps <span class="ab-beta">β = min(3, 8) = 3</span>. β=3 > α=−5, no prune. Node B returns 3.`
+    active:'L3', edges:['e-R-B','e-B-3'], alpha:-5, beta:3, node:'Leaf B\u2082=+8',
+    explain:"<span class=\"step-num\">Step 8:</span> Leaf B\u2082 = <span style=\"color:var(--positive)\">+8</span>. Human keeps <span class=\"ab-beta\">\u03B2 = min(3, 8) = 3</span>. \u03B2=3 > \u03B1=\u22125, no prune. Node B returns 3."
   },
   {
-    active:'B', edges:['e-R-B'], alpha:3, beta:Infinity, node:'Root ← B=+3', scoreB:3,
-    explain:`<span class="step-num">Step 9:</span> <span class="em-human">Node B returns +3</span>. Root updates <span class="ab-alpha">α = max(−5, 3) = 3</span>. AI's guaranteed minimum is now +3.`
+    active:'B', edges:['e-R-B'], alpha:3, beta:Infinity, node:'Root \u2190 B=+3', scoreB:3,
+    explain:"<span class=\"step-num\">Step 9:</span> <span class=\"em-human\">Node B returns +3</span>. Root updates <span class=\"ab-alpha\">\u03B1 = max(\u22125, 3) = 3</span>. AI\u2019s guaranteed minimum is now +3."
   },
   {
     active:'C', edges:['e-R-C'], alpha:3, beta:Infinity, node:'Node C',
-    explain:`<span class="step-num">Step 10:</span> Explore <strong>Move C</strong> — Human minimiser. Pass α=3, β=+∞.`
+    explain:"<span class=\"step-num\">Step 10:</span> Explore <strong>Move C</strong> \u2014 Human minimiser. Pass \u03B1=3, \u03B2=+\u221E."
   },
   {
-    active:'L4', edges:['e-R-C','e-C-4'], alpha:3, beta:-2, node:'Leaf C₁=−2', pruneNext:true,
-    explain:`<span class="step-num">Step 11:</span> Leaf C₁ = <span style="color:var(--negative)">−2</span>. Human updates <span class="ab-beta">β = min(+∞, −2) = −2</span>. Now check: <strong>β(−2) ≤ α(3)?  YES! ✂️ PRUNE!</strong>`
+    active:'L4', edges:['e-R-C','e-C-4'], alpha:3, beta:-2, node:'Leaf C\u2081=\u22122', pruneNext:true,
+    explain:"<span class=\"step-num\">Step 11:</span> Leaf C\u2081 = <span style=\"color:var(--negative)\">\u22122</span>. Human updates <span class=\"ab-beta\">\u03B2 = min(+\u221E, \u22122) = \u22122</span>. Now check: <strong>\u03B2(\u22122) \u2264 \u03B1(3)?  YES! \u2702\uFE0F PRUNE!</strong>"
   },
   {
-    active:'L4', edges:['e-R-C','e-C-4'], alpha:3, beta:-2, node:'Node C — Pruned!', pruneL5:true,
-    explain:`<span class="step-num">Step 12:</span> <span class="em-prune">✂️ Prune C₂!</span> β(−2) ≤ α(3) means: the AI already has a guaranteed +3 from Move B. Even if C₂ were the best leaf, the Human would still pick min(−2, C₂) ≤ −2 < +3. <strong>There's no point checking C₂ — the AI will never choose Move C.</strong>`
+    active:'L4', edges:['e-R-C','e-C-4'], alpha:3, beta:-2, node:'Node C \u2014 Pruned!', pruneL5:true,
+    explain:"<span class=\"step-num\">Step 12:</span> <span class=\"em-prune\">\u2702\uFE0F Prune C\u2082!</span> \u03B2(\u22122) \u2264 \u03B1(3) means: the AI already has a guaranteed +3 from Move B. Even if C\u2082 were the best leaf, the Human would still pick min(\u22122, C\u2082) \u2264 \u22122 < +3. <strong>There\u2019s no point checking C\u2082 \u2014 the AI will never choose Move C.</strong>"
   },
   {
-    active:'R', edges:[], alpha:3, beta:Infinity, node:'Root — Best: Move B', scoreR:3, final:'B',
-    explain:`<span class="step-num">Step 13:</span> <span class="em-ai">AI picks MAX(−5, +3, −2) = <span style="color:var(--positive)">+3</span> → Move B wins!</span> Alpha-Beta reached the same answer as plain Minimax — but by skipping C₂, it did <strong>less work</strong>.`
+    active:'R', edges:[], alpha:3, beta:Infinity, node:'Root \u2014 Best: Move B', scoreR:3, final:'B',
+    explain:"<span class=\"step-num\">Step 13:</span> <span class=\"em-ai\">AI picks MAX(\u22125, +3, \u22122) = <span style=\"color:var(--positive)\">+3</span> \u2192 Move B wins!</span> Alpha-Beta reached the same answer as plain Minimax \u2014 but by skipping C\u2082, it did <strong>less work</strong>."
   },
 ];
 
