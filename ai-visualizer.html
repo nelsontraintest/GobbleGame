@@ -391,16 +391,16 @@
     <div class="piece-controls">
       <label>Player:</label>
       <div class="toggle-group">
-        <button class="toggle-btn active-ai" id="s3-pick-ai"   onclick="s3PickPlayer('ai')">🤖 AI</button>
-        <button class="toggle-btn"           id="s3-pick-human" onclick="s3PickPlayer('human')">👤 Human</button>
+        <button class="toggle-btn active-ai" id="s3-pick-ai">🤖 AI</button>
+        <button class="toggle-btn"           id="s3-pick-human">👤 Human</button>
       </div>
       <label>Size:</label>
       <div class="toggle-group">
-        <button class="toggle-btn active-ai" id="s3-size-1" onclick="s3PickSize(1)">S</button>
-        <button class="toggle-btn"           id="s3-size-2" onclick="s3PickSize(2)">M</button>
-        <button class="toggle-btn"           id="s3-size-3" onclick="s3PickSize(3)">L</button>
+        <button class="toggle-btn active-ai" id="s3-size-1">S</button>
+        <button class="toggle-btn"           id="s3-size-2">M</button>
+        <button class="toggle-btn"           id="s3-size-3">L</button>
       </div>
-      <button class="btn btn-secondary" onclick="s3Clear()">🗑 Clear Board</button>
+      <button class="btn btn-secondary" id="s3-clear">🗑 Clear Board</button>
     </div>
 
     <div class="s3-layout">
@@ -1199,6 +1199,13 @@ function s3RenderScore() {
 // Init section 3
 s3RenderBoard();
 s3RenderScore();
+
+document.getElementById('s3-pick-ai').addEventListener('click', () => s3PickPlayer('ai'));
+document.getElementById('s3-pick-human').addEventListener('click', () => s3PickPlayer('human'));
+document.getElementById('s3-size-1').addEventListener('click', () => s3PickSize(1));
+document.getElementById('s3-size-2').addEventListener('click', () => s3PickSize(2));
+document.getElementById('s3-size-3').addEventListener('click', () => s3PickSize(3));
+document.getElementById('s3-clear').addEventListener('click', () => s3Clear());
 
 
 /* ════════════════════════════════════════════════════════════════
