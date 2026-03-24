@@ -484,7 +484,7 @@ function cloneState(state) {
   };
 }
 
-function top(stack) { return stack.length ? stack[stack.length - 1] : null; }
+function topPiece(stack) { return stack.length ? stack[stack.length - 1] : null; }
 
 function generateMoves(state, player) {
   const moves = [];
@@ -493,17 +493,17 @@ function generateMoves(state, player) {
   reserve.forEach(p => { if (!p.used) reserveAvail[p.size] = reserveAvail[p.size] || p; });
   Object.values(reserveAvail).forEach(piece => {
     for (let to = 0; to < 9; to++) {
-      const t = top(state.board[to]);
+      const t = topPiece(state.board[to]);
       if (!t || t.size < piece.size)
         moves.push({ type: 'place', player, size: piece.size, pieceId: piece.id, toCell: to });
     }
   });
   for (let from = 0; from < 9; from++) {
-    const t = top(state.board[from]);
+    const t = topPiece(state.board[from]);
     if (!t || t.player !== player) continue;
     for (let to = 0; to < 9; to++) {
       if (from === to) continue;
-      const dest = top(state.board[to]);
+      const dest = topPiece(state.board[to]);
       if (!dest || dest.size < t.size)
         moves.push({ type: 'move', player, size: t.size, pieceId: t.id, fromCell: from, toCell: to });
     }
@@ -525,7 +525,7 @@ function applyMove(state, move) {
 
 function checkWinner(state) {
   for (const line of WIN_LINES) {
-    const tops = line.map(i => top(state.board[i]));
+    const tops = line.map(i => topPiece(state.board[i]));
     if (tops[0] && tops[1] && tops[2] &&
         tops[0].player === tops[1].player &&
         tops[1].player === tops[2].player) return tops[0].player;
@@ -542,7 +542,7 @@ function evaluate(state) {
   for (const line of WIN_LINES) {
     let aiCount = 0, humanCount = 0, aiSize = 0, humanSize = 0;
     for (const i of line) {
-      const t = top(state.board[i]);
+      const t = topPiece(state.board[i]);
       if (!t) continue;
       if (t.player === 'ai')    { aiCount++;    aiSize    = Math.max(aiSize, t.size); }
       else                      { humanCount++; humanSize = Math.max(humanSize, t.size); }
@@ -559,7 +559,7 @@ function evaluate(state) {
     score += lineScore;
     breakdown.push({ line, aiCount, humanCount, lineScore });
   }
-  const c = top(state.board[4]);
+  const c = topPiece(state.board[4]);
   const centerBonus  = c ? (c.player === 'ai' ? 3 : -3) : 0;
   score += centerBonus;
   const aiLarge    = state.aiReserve.filter(p => !p.used && p.size === 3).length;
@@ -1136,7 +1136,7 @@ function s3RenderBoard() {
     const cell = document.createElement('div');
     cell.className = 'cell';
     cell.title = `Cell ${i}`;
-    const t = top(s3Board[i]);
+    const t = topPiece(s3Board[i]);
     if (t) {
       const piece = document.createElement('div');
       piece.className = `piece ${t.player === 'ai' ? 'ai-piece' : 'human-piece'} size-${t.size}`;
@@ -1149,7 +1149,7 @@ function s3RenderBoard() {
 }
 
 function s3PlaceOrGobble(cellIdx) {
-  const t = top(s3Board[cellIdx]);
+  const t = topPiece(s3Board[cellIdx]);
   if (t && t.size >= s3Size) return; // can't gobble equal or larger
 
   // Find an available piece from reserve
@@ -1251,7 +1251,7 @@ function s4RenderBoard(highlightCell) {
   for (let i = 0; i < 9; i++) {
     const cell = document.createElement('div');
     cell.className = 'cell' + (i === highlightCell ? ' highlighted' : '');
-    const t = top(s4State.board[i]);
+    const t = topPiece(s4State.board[i]);
     if (t) {
       const piece = document.createElement('div');
       piece.className = `piece ${t.player === 'ai' ? 'ai-piece' : 'human-piece'} size-${t.size}`;
