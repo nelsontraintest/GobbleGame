@@ -474,7 +474,7 @@ const WIN_LINES = [
 
 const WIN_SCORE = 100000;
 const INF = 1e9;
-const AI_SEARCH_DEPTH = 2; // depth used by the live move tracer (Section 4)
+const AI_SEARCH_DEPTH = 3; // depth used by the live move tracer (Section 4)
 
 function cloneState(state) {
   return {
@@ -1112,6 +1112,8 @@ function s3PickPlayer(p) {
   s3Player = p;
   document.getElementById('s3-pick-ai').className    = `toggle-btn ${p==='ai'?'active-ai':''}`;
   document.getElementById('s3-pick-human').className = `toggle-btn ${p==='human'?'active-human':''}`;
+  // Refresh size button colors to match new player
+  s3PickSize(s3Size);
 }
 function s3PickSize(s) {
   s3Size = s;
@@ -1212,18 +1214,19 @@ document.getElementById('s3-clear').addEventListener('click', () => s3Clear());
    SECTION 4 — "Watch the AI Think" Live Move Tracer
 ════════════════════════════════════════════════════════════════ */
 
-// Preset board: AI has size-2 in center (4), Human has size-1 in corner (0)
+// Preset board: Human size-2 in cell 0, Human size-1 in cell 4 (center), AI size-2 in cell 8
 function s4InitState() {
   return {
     board: Array.from({length:9}, (_,i) => {
-      if (i === 4) return [{id:'ai_c', player:'ai',    size:2}];
-      if (i === 0) return [{id:'hu_c', player:'human', size:1}];
+      if (i === 0) return [{id:'hu_2', player:'human', size:2}];
+      if (i === 4) return [{id:'hu_1', player:'human', size:1}];
+      if (i === 8) return [{id:'ai_2', player:'ai',    size:2}];
       return [];
     }),
     humanReserve: [
-      {id:'h1a', player:'human', size:1, used:true},
+      {id:'h1a', player:'human', size:1, used:true},   // placed at cell 4
       {id:'h1b', player:'human', size:1, used:false},
-      {id:'h2a', player:'human', size:2, used:false},
+      {id:'h2a', player:'human', size:2, used:true},   // placed at cell 0
       {id:'h2b', player:'human', size:2, used:false},
       {id:'h3a', player:'human', size:3, used:false},
       {id:'h3b', player:'human', size:3, used:false},
@@ -1231,7 +1234,7 @@ function s4InitState() {
     aiReserve: [
       {id:'a1a', player:'ai', size:1, used:false},
       {id:'a1b', player:'ai', size:1, used:false},
-      {id:'a2a', player:'ai', size:2, used:true},
+      {id:'a2a', player:'ai', size:2, used:true},  // placed at cell 8
       {id:'a2b', player:'ai', size:2, used:false},
       {id:'a3a', player:'ai', size:3, used:false},
       {id:'a3b', player:'ai', size:3, used:false},
