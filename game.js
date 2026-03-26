@@ -88,16 +88,26 @@ function canPlace(size, cellIndex) {
 /* ================================================================
  * Win / draw detection
  * ================================================================ */
-function checkWinner() {
+function checkWinner(currentPlayer) {
+  // When a move simultaneously completes the current player's line and reveals
+  // an opponent line (by un-gobbling), the mover's win must take priority.
+  // We therefore scan all lines, immediately return if the current player's
+  // line is found, and only fall back to an opponent win if no such line exists.
+  let opponentWin = null;
   for (const line of WIN_LINES) {
     const tops = line.map(i => topPiece(i));
     if (tops[0] && tops[1] && tops[2] &&
         tops[0].player === tops[1].player &&
         tops[1].player === tops[2].player) {
-      return { player: tops[0].player, line };
+      if (tops[0].player === currentPlayer) {
+        return { player: tops[0].player, line };
+      }
+      if (!opponentWin) {
+        opponentWin = { player: tops[0].player, line };
+      }
     }
   }
-  return null;
+  return opponentWin;
 }
 
 function hasMoves(player) {
@@ -138,7 +148,7 @@ function executeMove(move) {
   }
 
   // Check result
-  const win = checkWinner();
+  const win = checkWinner(move.player);
   if (win) {
     render(win.line);
     showGameOver(win.player);
