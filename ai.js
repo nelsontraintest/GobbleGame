@@ -9,7 +9,7 @@
 
 const AI = (() => {
   /* ---- constants ---- */
-  const MAX_DEPTH   = 6;   // search depth (lower = faster on mobile)
+  const MAX_DEPTH   = 5;   // search depth (lower = faster on mobile)
   const INF         = 1e9;
   const WIN_SCORE   = 100000;
 
