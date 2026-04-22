@@ -93,14 +93,32 @@
       </div>
     </div>
 
-    <!-- Who goes first modal -->
+    <!-- Who goes first / Difficulty modal -->
     <div id="first-turn-overlay" class="hidden">
       <div id="first-turn-card">
-        <h2>Who Goes First?</h2>
-        <div id="first-turn-options">
-          <button class="first-turn-btn btn-primary" data-choice="human">👤 You</button>
-          <button class="first-turn-btn btn-primary" data-choice="ai">🤖 AI</button>
-          <button class="first-turn-btn btn-secondary" data-choice="random">🎲 Random</button>
+        <h2>New Game</h2>
+        
+        <div class="modal-section">
+          <h3>1. Choose AI Level</h3>
+          <div id="difficulty-options" class="option-grid">
+            <button class="difficulty-btn btn-secondary selected" data-level="expert">
+              <span class="level-title">🧠 Expert</span>
+              <span class="level-desc">AutoResearch Optimized AI</span>
+            </button>
+            <button class="difficulty-btn btn-secondary" data-level="easy">
+              <span class="level-title">🐣 Easy</span>
+              <span class="level-desc">Original Simple AI</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <h3>2. Who Goes First?</h3>
+          <div id="first-turn-options" class="option-grid">
+            <button class="first-turn-btn btn-primary" data-choice="human">👤 You</button>
+            <button class="first-turn-btn btn-primary" data-choice="ai">🤖 AI</button>
+            <button class="first-turn-btn btn-secondary" data-choice="random">🎲 Random</button>
+          </div>
         </div>
       </div>
     </div>

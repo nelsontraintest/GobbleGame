@@ -14,6 +14,7 @@ let gameState = null;     // { board, humanReserve, aiReserve }
 let selection = null;     // { type:'reserve'|'board', pieceId, fromCell? }
 let gameOver  = false;
 let aiThinking = false;
+let aiDifficulty = 'expert'; // 'easy' or 'expert'
 let lastMovedPieceId = null;  // track the most recently placed/moved piece for animation
 
 const WIN_LINES = [
@@ -56,6 +57,16 @@ function initGame(firstTurn = 'human') {
 function showFirstTurnModal() {
   const overlay = document.getElementById('first-turn-overlay');
   overlay.classList.remove('hidden');
+
+  // Handle difficulty selection
+  const diffBtns = document.querySelectorAll('.difficulty-btn');
+  diffBtns.forEach(btn => {
+    btn.onclick = () => {
+      diffBtns.forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      aiDifficulty = btn.dataset.level;
+    };
+  });
 
   function onChoice(e) {
     const btn = e.target.closest('.first-turn-btn');
@@ -185,7 +196,8 @@ function executeMove(move) {
  * ================================================================ */
 function triggerAI() {
   aiThinking = true;
-  setStatus('🤖 AI is thinking…', 'ai');
+  const statusStr = aiDifficulty === 'expert' ? '🤖 AI is thinking… (Expert)' : '🤖 AI is thinking… (Easy)';
+  setStatus(statusStr, 'ai');
   getStatusBar().classList.add('thinking');
 
   setTimeout(() => {
@@ -194,7 +206,7 @@ function triggerAI() {
       humanReserve: gameState.humanReserve.map(p => ({...p})),
       aiReserve:    gameState.aiReserve.map(p => ({...p})),
     };
-    const move = AI.getBestMove(aiState);
+    const move = AI.getBestMove(aiState, aiDifficulty);
     aiThinking = false;
     getStatusBar().classList.remove('thinking');
 
@@ -205,8 +217,9 @@ function triggerAI() {
       gameState.turn = 'human';
       render();
     }
-  }, 600);
+  }, aiDifficulty === 'expert' ? 600 : 400); // Shorter delay for easy AI to feel "snappier"
 }
+
 
 /* ================================================================
  * Selection logic
